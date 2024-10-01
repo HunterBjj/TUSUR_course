@@ -1,1 +1,1 @@
-# TUSUR_C-_course
+# TUSUR_course
