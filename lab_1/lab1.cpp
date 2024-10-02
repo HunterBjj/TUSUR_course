@@ -8,6 +8,19 @@
 
 using namespace std;
 
+
+// Вычисляет скорость прямолинейного движения (по расстоянию и времени).
+int calc_speed(int s, int t) {  
+    return s / t;
+}
+
+
+// Вычисляет ускорение (по начальной скорости, конечной скорости и времени).
+int calc_boost(int v1, int v0, int t) { 
+    return (v1 - v0) / t
+}
+
+
 int main()
 {
     int a, b, S;
@@ -25,3 +38,5 @@ int main()
 
     return 0;
 }
+
+
