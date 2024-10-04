@@ -21,9 +21,6 @@ void print_name() {
             cout<< "Группа: 317" << endl;
             cout.width(51);
             cout<< "Урманов Артём\n" << endl;
-            if(i == 10) {
-
-            }
         }
     }
     cout << setw(25) << "ТУСУР 2024" << setw(25) << endl;
