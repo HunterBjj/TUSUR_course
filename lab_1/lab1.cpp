@@ -64,7 +64,7 @@ void print_name() {
             cout<< "Урманов Артём\n" << endl;
         }
     }
-    cout << setw(25) << "ТУСУР 2024" << setw(25) << endl;
+    cout << setw(25) << "ТОМСК 2024" << setw(25) << endl;
 }
 
 
