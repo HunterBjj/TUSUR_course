@@ -89,9 +89,7 @@ f)
 
 #include <iostream>
 
-int main() 
-
-{
+int main() {
 
  // Тело функции
  
