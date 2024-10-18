@@ -1,0 +1,38 @@
+int calcMethodBrock(int age, int height, int gender) {
+    if(gender == 0) {
+        int weigthMan = (height - 100) * 0.9;
+        return weigthMan;
+    }
+    else if(gender == 1) {
+        int weigthWoman = (height - 100) * 0.85;
+        return weigthWoman;
+    }
+    
+    return -1;
+}
+
+int calcMethodIndex(int height, int gender) {
+     if(gender == 0) {
+        int weigthMan = (height - 100) * 0.9;
+        return weigthMan;
+    }
+    else if(gender == 1) {
+        int weigthWoman = (height - 100) * 0.85;
+        return weigthWoman;
+    }
+    
+    return -1;
+}
+
+int calcMethodAge(int age, int height, int gender) {
+     if(gender == 0) {
+        int weigthMan = (height - 100) * 0.9;
+        return weigthMan;
+    }
+    else if(gender == 1) {
+        int weigthWoman = (height - 100) * 0.85;
+        return weigthWoman;
+    }
+    
+    return -1;
+}

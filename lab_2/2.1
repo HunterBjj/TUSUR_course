@@ -1,0 +1,46 @@
+#include <iostream>
+#include <calcheight.cpp>
+
+
+int main() {
+
+    int age, height, gender;
+    char weightMode;
+ 
+    cout<<"Введите возраст: \n";
+    cin>>age;
+    cout<<"Введите вес \n";
+    cin>>height;
+    cout<<"Если мужчина введите 1, женщина 0: \n"
+    cin>>gender;
+    cout<< " Подсчет идеального веса \n 
+            a - по формуле Брока \n b - по индексу массы тела \n с - по индексу массы тела с учетом возраста \n";
+    cin>>weightMode;
+
+    if((gender == 1 or gender == 0) and (int(age) and int(height))) {
+        switch (weightMode)
+        {
+        case 'a':
+            int res = calcMethodBrock(height, gender);
+            cout<<"Ваш вес должен быть:"<<res;
+            break;
+        case 'b':
+            int res = calcMethodIndex(age, height, gender);
+            cout<<"Ваш вес должен быть:"<<res;
+            break;
+        case 'c':
+            int res calcMethodAge(age, height, gender);
+            cout<<"Ваш вес должен быть:"<<res;
+            break;
+        default:
+            cout<<"Вы ввели неверное значение:"<<res;
+        }
+            
+        }
+       
+        
+    }
+    
+    
+    return 0;
+}
