@@ -1,0 +1,32 @@
+#include<iostream>
+/*
+  Создайте консольное приложение в Qt Creator. Приложение должно предложить
+  пользователю ввести 10 чисел с плавающей точкой, а потом вывести на экран их среднее
+  арифметическое, используя числа с плавающей точкой.
+  Среднее арифметическое – это сумма нескольких слагаемых, разделённая на количество этих
+  слагаемых.
+*/
+
+int main() {
+    int i = 0;
+    float num;
+    float avg_num;
+
+    while(i < 10) {
+        std::cout<<"Enter value"<<std::endl;
+        std::cin>>num<<std::endl;
+        
+        if(!float(num)) {
+            std::cout<<"Error!"<<std::endl;
+            return -1;
+        }
+        
+        avg_num += num;
+        i++;
+    }
+
+    avg_num /= 10;
+    std::cout<<"avg num = "<<avg_num<<std::endl;
+
+    return 0;
+}
