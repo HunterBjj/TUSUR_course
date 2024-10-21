@@ -1,0 +1,26 @@
+#include <iostream>
+/*
+    Напишите программу, которая просит пользователя ввести число в диапазоне от 0 до
+    2^n, где n=4, затем просит пользователя ввести число на которое необходимо сдвинуть число
+    влево.
+*/
+
+int main()
+{
+    short num;
+    unsigned shift;
+    int res;
+
+    while(num < 17) {
+        std::cout<<"Enter num"<<std::endl;
+        std::cin>>num;
+        std::cout<<"Enter >>"<<std::endl;
+        std::cin>>shift;
+
+        res = num << shift;
+
+        std::cout<<"result = "<<res;
+    }
+
+    return 0;
+}
