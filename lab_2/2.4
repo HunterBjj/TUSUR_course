@@ -1,0 +1,23 @@
+#include <iostream>
+#include <iomanip> // для std::setprecision()
+/*
+    Создайте консольное приложение в Qt Creator. Приложение должно переводить следующие
+    числа из существующей записи в экспоненциальную запись в стиле языка C++ (используя
+    букву е, как символ экспонента). Определите, сколько значащих цифр имеет каждое из
+    следующих чисел, и выведите их на экран:
+*/
+
+int main()
+{
+    float x = 34.50034567;
+    float y = 0.004000;
+    float z = 123.00544444;
+    float k = 146000.223;
+
+    std::cout<<std::setprecision(5)<<x<<std::endl;
+    std::cout<<std::setprecision(5)<<y<<std::endl;
+    std::cout<<std::setprecision(6)<<z<<std::endl;
+    std::cout<<std::setprecision(6)<<k<<std::endl;
+
+    return 0;
+}
