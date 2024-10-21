@@ -1,0 +1,43 @@
+#include <iostream>
+/*
+    Реализуйте консольный калькулятор.
+*/
+
+using namespace std;
+
+int main()
+{
+    float x, y, res;
+    int operation;
+    cout<<"Enter x "<<endl;
+    cin>>x;
+    cout<<"Enter y "<<endl;
+    cin>>y;
+    cout<<"Select operation: 0 = +, 1 = -, 2 = /, 3 = *"<<endl;
+    cin>>operation;
+
+    switch (operation) {
+    case 0:
+        res = x + y;
+        cout<<"res = "<<x<<" + "<<y<<" = "<<res<<endl;
+        break;
+    case 1:
+        res = x - y;
+        cout<<"res = "<<x<<" - "<<y<<" = "<<res<<endl;
+        break;
+    case 2:
+        res = x / y;
+        cout<<"res = "<<x<<" / "<<y<<" = "<<res<<endl;
+        break;
+    case 3:
+        res = x * y;
+        cout<<"res = "<<x<<" * "<<y<<" = "<<res<<endl;
+        break;
+
+    default:
+        cout<<"Error selected operation!";
+        break;
+    }
+
+    return 0;
+}
