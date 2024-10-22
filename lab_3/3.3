@@ -1,0 +1,28 @@
+#include <iostream>
+/*
+    Выполните в отдельной функции, Сopy initialization (копирующая инициализация), Direct
+    initialization (прямая инициализация), Uniform initialization, auto инициализацию следующих
+    типов данных:
+*/
+
+static int X = 55;
+
+using namespace std;
+
+auto init_value() -> int { // trailing.
+    int iValue = 5; // Сopy initialization (копирующая инициализация).
+    bool bValue(true); // Direct initialization (прямая инициализация).
+    char cValue = {'c'}; // Uniform initialization (объеденяющая инициализация).
+    auto lValue = 8; // auto initialization (автоматическая инициализация).
+    int X = 5;
+    cout<<"Local X = "<<X<<endl;
+
+    return iValue;
+}
+
+int main()
+{
+    init_value();
+
+    cout<<"Global X = "<<X<<endl;
+}
