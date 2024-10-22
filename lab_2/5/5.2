@@ -1,0 +1,34 @@
+#include <iostream>
+/*
+  Задайте 6 логических констант (с помощью const, constexpr, либо макросов) для пер-
+  вых трёх выражений. Для последнего выражения также задайте 6 целочисленных констант в
+  
+  собственном целочисленном типе (с помощью enum).
+  Реализуйте вывод результатов следующих выражений, подставив в них Ваши константы
+  вместо пропусков (зелёных):
+*/
+
+#define BLACK 0
+#define BLUE 1
+#define RED 2
+#define BROWN 3
+#define PURPLE 4
+
+enum {
+    white,
+    blue,
+    purple,
+    brown,
+    black,
+};
+
+using namespace std;
+
+const int X = 0;
+
+int main()
+{
+    bool r = ((BLUE && white) || (!BROWN) && (PURPLE || X));
+    cout<<"r = "<<r<<endl;
+    return 0;
+}
