@@ -1,0 +1,68 @@
+#include <iostream>
+/*
+    Определите перечисление (или класс enum) Animal, которое содержит следующих животных:
+    pig, chicken, goat, cat, dog. Напишите функцию getAnimalName(), которая принимает
+    параметр Animal и использует switch для вывода имя животного в консоль. Напишите еще
+    одну функцию — printNumberOfLegs(), которая использует switch для вывода количества лап
+    соответствующего типа животного. Убедитесь, что обе функции имеют кейс default, который
+    выводит сообщение об ошибке.
+*/
+
+using namespace std;
+
+enum Animal {
+    pig,
+    chicken,
+    goat,
+    cat,
+    dog,
+};
+
+void get_animal_name(Animal animal) {
+    switch(animal) {
+    case Animal::pig:
+        cout << "pig" << endl;
+        break;
+    case Animal::chicken:
+        cout << "chicken" << endl;
+        break;
+    case Animal::goat:
+        cout << "goat" << endl;;
+        break;
+    case Animal::cat:
+        cout << "cat" << endl;
+        break;
+    case Animal::dog:
+        cout << "dog" << endl;
+        break;
+    default:
+        cout << "Error!";
+    }
+}
+
+void print_legs(Animal animal) {
+    switch(animal) {
+    case Animal::pig:
+    case Animal::goat:
+    case Animal::cat:
+    case Animal::dog:
+        cout << "4 legs" << endl;
+        break;
+    case Animal::chicken:
+        cout << "2 legs" << endl;
+        break;
+    default:
+        cout << "Error!" << endl;
+        break;
+    }
+}
+
+int main()
+{
+    Animal my_animal = Animal::dog;
+
+    get_animal_name(my_animal);
+    print_legs(my_animal);
+
+    return 0;
+}
