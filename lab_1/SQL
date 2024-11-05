@@ -1,0 +1,225 @@
+elect d.*
+from (
+    select
+        wl.source_s,
+        ft.name OILFIELD,
+        wt.name WELL,
+        case             
+                when wl.layer_s = 188546500 then 'Ю1(2+3)' 
+                when wl.layer_s = 2295966101 then 'Ю1(М)'
+                else (select name from layer dt where dt.layer_s = wl.layer_s)
+        end KPLAST,
+        case             
+                when wl.layer_s = 188546500 then 'Ю1(2+3)' 
+                when wl.layer_s = 2295966101 then 'Ю1(М)'
+                else (select name from layer dt where dt.layer_s = wl.layer_s)
+        end KPLASTZONE,
+        top H,
+        base-top L,
+        top_dsrd Habs,
+        base_dsrd-top_dsrd Labs,
+        (select name from pxp.dict_table dt where dt.dict_s = wl.lithology_s) Lit,
+        case
+            when wl.saturation_s = 135616250 then 
+                0
+            else 
+                1 
+        end Collector,
+        case 
+            when wl.saturation_s = 135616250 then 
+                ''
+            else 
+                (select name from pxp.dict_table dt where dt.dict_s = wl.saturation_s) 
+        end Sat0,
+        r R,
+        rel_par_sp APS,
+        rel_par_g aGK,
+        rel_par_n aNKT,
+        porosity_o * 100 Kpor,
+        permeability Kpr,
+        kg Kgas,
+        clay Kgl,
+        kng * 100 Kng
+    from well_log_result_layer wl,
+        pxp.well_table wt,
+        pxp.field_table ft
+    where wl.source_schema =  /* 'VTK' -- */ 'SVN'
+        and wt.well_s = wl.well_s 
+        and wt.field_s = ft.field_s
+        and wl.well_s in (
+            select distinct cwl.well_s 
+            from well_log_result_layer cwl
+            where cwl.source_schema = wl.source_schema
+                and cwl.source_s in (
+        25631757707 /*ОПЗ 2018*/,
+        26069757407 /*ОПЗ 2019*/,
+        26069757507 /*ОПЗ 2020*/,
+        26069757607 /*ОПЗ 2021*/,
+        26069757707 /*ОПЗ 2022*/,
+        26069757807 /*ОПЗ 2023*/,
+        26069757907 /*ОПЗ 2024*/,
+        26069758007 /*ОПЗ 2025*/,
+        26069758107 /*ОПЗ 2026*/,
+        26069758207 /*ОПЗ 2027*/,
+        26069758307 /*ОПЗ 2028*/,
+        26069758407 /*ОПЗ 2029*/,
+        26069758507 /*ОПЗ 2030*/,
+                    19533202006 /*ПЗ 2010*/,
+                    25566543207 /*ПЗ 2018*/,
+                    25832319107 /*ПЗ 2019*/,
+                    26069756007 /*ПЗ 2020*/,
+                    26069756107 /*ПЗ 2021*/,
+                    26069756207 /*ПЗ 2022*/,
+                    26069756307 /*ПЗ 2023*/,
+                    26069756407 /*ПЗ 2024*/,
+                    26069756507 /*ПЗ 2025*/,
+                    26069756607 /*ПЗ 2026*/,
+                    26069756707 /*ПЗ 2027*/,
+                    26069756807 /*ПЗ 2028*/,
+                    26069756907 /*ПЗ 2029*/,
+                    26069757007 /*ПЗ 2030*/,
+26508688107 /*ПАО «ННК-Варьеганнефтегаз»*/,
+26508745407 /*АО «ННК-ННП»*/,
+25958343407 /*ООО "Няганьнефть"*/,
+26685661907 /*ООО ННК-Оренбургнефтегаз*/,
+26904172007 /*ООО «ННК Северная-нефть»*/,   
+27173511907  /*  АО "Нефтегаз Югра"*/)
+        )
+        and wl.result_date = (
+            select max(cwl.result_date) 
+            from well_log_result_layer cwl
+            where cwl.source_schema = wl.source_schema
+                and cwl.well_s = wl.well_s  
+                and cwl.source_s in (    
+        25631757707 /*ОПЗ 2018*/,
+        26069757407 /*ОПЗ 2019*/,
+        26069757507 /*ОПЗ 2020*/,
+        26069757607 /*ОПЗ 2021*/,
+        26069757707 /*ОПЗ 2022*/,
+        26069757807 /*ОПЗ 2023*/,
+        26069757907 /*ОПЗ 2024*/,
+        26069758007 /*ОПЗ 2025*/,
+        26069758107 /*ОПЗ 2026*/,
+        26069758207 /*ОПЗ 2027*/,
+        26069758307 /*ОПЗ 2028*/,
+        26069758407 /*ОПЗ 2029*/,
+        26069758507 /*ОПЗ 2030*/,
+                    19533202006 /*ПЗ 2010*/,                    
+                    25566543207 /*ПЗ 2018*/,
+                    25832319107 /*ПЗ 2019*/,
+                    26069756007 /*ПЗ 2020*/,
+                    26069756107 /*ПЗ 2021*/,
+                    26069756207 /*ПЗ 2022*/,
+                    26069756307 /*ПЗ 2023*/,
+                    26069756407 /*ПЗ 2024*/,
+                    26069756507 /*ПЗ 2025*/,
+                    26069756607 /*ПЗ 2026*/,
+                    26069756707 /*ПЗ 2027*/,
+                    26069756807 /*ПЗ 2028*/,
+                    26069756907 /*ПЗ 2029*/,
+                    26069757007 /*ПЗ 2030*/,
+26508688107 /*ПАО «ННК-Варьеганнефтегаз»*/,
+26508745407 /*АО «ННК-ННП»*/,
+25958343407 /*ООО "Няганьнефть"*/,
+26685661907 /*ООО ННК-Оренбургнефтегаз*/,
+26701578407 /*ООО "ННК-Самаранефтегаз"*/,
+26904172007 /*ООО «ННК Северная-нефть»*/,   
+27173511907  /*  АО "Нефтегаз Югра"*/)
+        )
+    union all
+    select
+        wl.source_s,
+        ft.name OILFIELD,
+        wt.name WELL,
+        case             
+                when wl.layer_s = 188546500 then 'Ю1(2+3)' 
+                when wl.layer_s = 2295966101 then 'Ю1(М)'
+                else (select name from layer dt where dt.layer_s = wl.layer_s)
+        end KPLAST,
+        case             
+                when wl.layer_s = 188546500 then 'Ю1(2+3)' 
+                when wl.layer_s = 2295966101 then 'Ю1(М)'
+                else (select name from layer dt where dt.layer_s = wl.layer_s)
+        end KPLASTZONE,
+        top H,
+        base-top L,
+        top_dsrd Habs,
+        base_dsrd-top_dsrd Labs,
+        (select name from pxp.dict_table dt where dt.dict_s = wl.lithology_s) Lit,
+        case
+            when wl.saturation_s = 135616250 then 
+                0
+            else 
+                1 
+        end Collector,
+        case 
+            when wl.saturation_s = 135616250 then 
+                ''
+            else 
+                (select name from pxp.dict_table dt where dt.dict_s = wl.saturation_s) 
+        end Sat0,
+        r R,
+        rel_par_sp APS,
+        rel_par_g aGK,
+        rel_par_n aNKT,
+        porosity_o * 100 Kpor,
+        permeability Kpr,
+        kg Kgas,
+        clay Kgl,
+        kng * 100 Kng
+    from well_log_result_layer wl,
+        pxp.well_table wt,
+        pxp.field_table ft
+    where wt.well_s = wl.well_s 
+        and wt.field_s = ft.field_s
+        and wl.source_schema = /* 'VTK' -- */ 'SVN'
+        and wl.well_s in (
+            select distinct cwl.well_s 
+            from well_log_result_layer cwl
+            where cwl.source_schema = wl.source_schema
+                and not exists (
+                    select * 
+                    from well_log_result_layer c 
+                    where c.well_s = cwl.well_s
+                        and c.source_s in (
+                25631757707 /*ОПЗ 2018*/,
+                26069757407 /*ОПЗ 2019*/,
+                26069757507 /*ОПЗ 2020*/,
+                26069757607 /*ОПЗ 2021*/,
+                26069757707 /*ОПЗ 2022*/,
+                26069757807 /*ОПЗ 2023*/,
+                26069757907 /*ОПЗ 2024*/,
+                26069758007 /*ОПЗ 2025*/,
+                26069758107 /*ОПЗ 2026*/,
+                26069758207 /*ОПЗ 2027*/,
+                26069758307 /*ОПЗ 2028*/,
+                26069758407 /*ОПЗ 2029*/,
+                26069758507 /*ОПЗ 2030*/,
+                            19533202006 /*ПЗ 2010*/,                
+                            25566543207 /*ПЗ 2018*/,
+                            25832319107 /*ПЗ 2019*/,
+                            26069756007 /*ПЗ 2020*/,
+                            26069756107 /*ПЗ 2021*/,
+                            26069756207 /*ПЗ 2022*/,
+                            26069756307 /*ПЗ 2023*/,
+                            26069756407 /*ПЗ 2024*/,
+                            26069756507 /*ПЗ 2025*/,
+                            26069756607 /*ПЗ 2026*/,
+                            26069756707 /*ПЗ 2027*/,
+                            26069756807 /*ПЗ 2028*/,
+                            26069756907 /*ПЗ 2029*/,
+                            26069757007 /*ПЗ 2030*/,                            
+26508688107 /*ПАО «ННК-Варьеганнефтегаз»*/,
+26508745407 /*АО «ННК-ННП»*/,
+25958343407 /*ООО "Няганьнефть"*/,
+26685661907 /*ООО ННК-Оренбургнефтегаз*/,
+26701578407 /*ООО "ННК-Самаранефтегаз"*/,   
+27173511907  /*  АО "Нефтегаз Югра"*/)
+            )
+        )
+        and wl.result_date = (
+            select max(cwl.result_date) 
+            from well_log_result_layer cwl
+            where cwl.source_schema = wl.source_schema
+                and cwl.well_s = wl.well_s)) d           
+where d.kplast is not null and d.kplast <>'Нет значения'
