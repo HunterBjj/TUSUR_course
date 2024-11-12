@@ -1,3 +1,128 @@
+Для того чтобы вставить данные из текстового документа в таблицу в Oracle, нужно выполнить следующие шаги:
+
+Подготовьте таблицу в базе данных. Предположим, что она уже существует и имеет структуру, подходящую для ваших данных. В противном случае создайте таблицу с нужными колонками. Пример таблицы может выглядеть так:
+
+sql
+Копировать код
+CREATE TABLE your_table (
+    coord_x NUMBER,
+    coord_y NUMBER,
+    height NUMBER,
+    depth NUMBER,
+    code VARCHAR2(10),
+    label VARCHAR2(10)
+);
+Загрузите данные из файла в Oracle. Для этого можно использовать утилиту SQL*Loader или PL/SQL. Здесь будет показан пример на PL/SQL с использованием временной таблицы и чтения файла построчно.
+
+Используйте PL/SQL для чтения и вставки данных. Пример процедуры для загрузки файла data.txt в таблицу:
+
+sql
+Копировать код
+DECLARE
+    file_handle UTL_FILE.FILE_TYPE;
+    line VARCHAR2(1000);
+    coord_x NUMBER;
+    coord_y NUMBER;
+    height NUMBER;
+    depth NUMBER;
+    code VARCHAR2(10);
+    label VARCHAR2(10);
+BEGIN
+    -- Укажите путь к вашему файлу
+    file_handle := UTL_FILE.FOPEN('DIRECTORY_PATH', 'data.txt', 'r');
+
+    LOOP
+        BEGIN
+            -- Чтение строки из файла
+            UTL_FILE.GET_LINE(file_handle, line);
+
+            -- Разбор строки и извлечение данных
+            coord_x := TO_NUMBER(SUBSTR(line, 1, 11));
+            coord_y := TO_NUMBER(SUBSTR(line, 13, 11));
+            height := TO_NUMBER(SUBSTR(line, 25, 7));
+            depth := TO_NUMBER(SUBSTR(line, 33, 7));
+            code := TRIM(SUBSTR(line, 41, 5));
+            label := TRIM(SUBSTR(line, 48, 10));
+
+            -- Вставка данных в таблицу
+            INSERT INTO your_table (coord_x, coord_y, height, depth, code, label)
+            VALUES (coord_x, coord_y, height, depth, code, label);
+
+        EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                EXIT;  -- Прекращаем чтение файла при его завершении
+        END;
+    END LOOP;
+
+    UTL_FILE.FCLOSE(file_handle);
+END;
+Заметка: Для корректной работы процедуры необходимо настроить DIRECTORY в Oracle, указывающий на путь к файлу.
+
+Создайте DIRECTORY в Oracle (если он еще не создан) и предоставьте права на него:
+
+sql
+Копировать код
+CREATE OR REPLACE DIRECTORY directory_path AS '/path/to/your/file';
+GRANT READ, WRITE ON DIRECTORY directory_path TO your_user;
+Запустите скрипт, чтобы вставить данные в таблицу.
+
+После выполнения этих шагов ваши данные из текстового файла будут успешно добавлены в таблицу Oracle.
+
+
+
+
+
+
+Вы сказали:
+на питоне
+ChatGPT сказал:
+ChatGPT
+Чтобы вставить данные из текстового файла в таблицу Oracle с помощью Python, можно использовать библиотеку cx_Oracle. Вот пошаговый пример кода:
+
+Установите библиотеку cx_Oracle, если она еще не установлена:
+
+bash
+Копировать код
+pip install cx_Oracle
+Подключитесь к базе данных Oracle и прочитайте файл, разбивая его на отдельные значения. Затем вставьте эти значения в таблицу.
+
+Вот пример кода на Python, который делает это:
+
+python
+Копировать код
+import cx_Oracle
+
+# Настройки подключения к Oracle
+dsn = cx_Oracle.makedsn("host", "port", service_name="service_name")
+connection = cx_Oracle.connect(user="username", password="password", dsn=dsn)
+
+# Открываем текстовый файл и считываем данные построчно
+with open("data.txt", "r") as file:
+    cursor = connection.cursor()
+    
+    # Обход строк файла и вставка данных в таблицу
+    for line in file:
+        # Разбиваем строку на нужные значения
+        coord_x = float(line[0:11].strip())
+        coord_y = float(line[12:23].strip())
+        height = float(line[24:31].strip())
+        depth = float(line[32:39].strip())
+        code = line[40:45].strip()
+        label = line[46:].strip()
+
+        # Вставка данных в таблицу
+        cursor.execute("""
+            INSERT INTO your_table (coord_x, coord_y, height, depth, code, label) 
+            VALUES (:1, :2, :3, :4, :5, :6)
+        """, (coord_x, coord_y, height, depth, code, label))
+    
+    # Сохранение изменений
+    connection.commit()
+
+# Закрытие подключения
+cursor.close()
+connection.close()
+
 for i in range():
 
 	INSERT INTO RESERVOIR_SET_table
