@@ -1,3 +1,66 @@
+import cx_Oracle
+
+# Настройки подключения к Oracle
+
+dsn = cx_Oracle.makedsn("192.168.252.113", "1521", service_name="PXPMSK")
+connection = cx_Oracle.connect(user="ORN", password="ORN", dsn=dsn)
+
+# получим объект файла
+file1 = open("D:/plast2.txt", "r")
+#cursor = connection.cursor()
+#cursor.execute("""call pxp.fw_pkg.setUser(1, 1, null, null, null, null, 'OIL_ORN'"""))
+
+while True:
+    # считываем строку
+    line = file1.readline()
+    # прерываем цикл, если строка пустая
+    if not line:
+        break
+    categories = []
+    #print(line.split("")[5])
+    res = line.split(" ")
+    for i in range(len(res)):
+        if res[i]:
+            categories.append(res[i])
+    print(categories[5])
+
+    # выводим строку
+        cursor.execute("""
+        INSERT INTO WELL_NODE
+            (   
+             WELL_NODE_S,
+             WELL_S,
+             RESERVOIR_S,
+             X,
+             Y,
+             TYPE_S,
+             LOADER_TYPE_S
+            )
+            SELECT pxp.pxp_seq.nextval WELL_NODE_S,
+            (SELECT WELL_S FROM pxp.well WHERE NAME = {categories[4]}) WELL_S,
+            (SELECT RESERVOIR_S FROM pxp.reservoir WHERE (field_s IN (SELECT FIELD_S FROM PXP.WELL WHERE NAME = {categories[4])}) AND (name = {categories[5]})))) RESERVOIR_S,
+            {categories[0]} X,
+            {categories[1]} Y,
+            295945703   TYPE_S,
+            S148127003  LOADER_TYPE_S
+        FROM dual """)
+
+# закрываем файл
+file1.close
+
+
+
+
+
+
+SELECT * from DICT WHERE name = 'Пластопересечение'
+(SELECT DISTINCT(TYPE_S) FROM pxp.reservoir_SET_table WHERE FIELD_S IN (SELECT FIELD_S FROM PXP.WELL WHERE NAME = {categories[4]})) 
+
+ 
+
+
+
+
 Для того чтобы вставить данные из текстового документа в таблицу в Oracle, нужно выполнить следующие шаги:
 
 Подготовьте таблицу в базе данных. Предположим, что она уже существует и имеет структуру, подходящую для ваших данных. В противном случае создайте таблицу с нужными колонками. Пример таблицы может выглядеть так:
