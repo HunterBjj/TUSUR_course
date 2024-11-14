@@ -1,3 +1,26 @@
+INSERT INTO WELL_NODE (
+    WELL_NODE_S,
+    WELL_S,
+    RESERVOIR_S,
+    X,
+    Y,
+    TYPE_S,
+    LOADER_TYPE_S
+)
+    SELECT d.pxp.pxp_seq.nextval WELL_NODE_S,
+    (SELECT WELL_S FROM pxp.well WHERE NAME = external.name1)  WELL_S,
+    (SELECT RESERVOIR_S 
+     FROM pxp.reservoir 
+     WHERE field_s IN (SELECT FIELD_S FROM PXP.WELL WHERE NAME = external.name1)
+        AND (name = external.name2))  RESERVOIR_S,
+    external.x  X,
+    external.y  Y,
+    295945703  TYPE_S,  --пластопересечение
+    148127003 LOADER_TYPE_S
+    FROM pxp_test.well_node_external external, dual d;
+
+
+
 Ваш скрипт в целом правильный, но требует некоторых исправлений, чтобы он работал корректно. Вот основные замечания и исправления:
 
 Проблема с синтаксисом в SQL-запросе. Вложенные скобки и форматирование строки INSERT нуждаются в корректировке.
