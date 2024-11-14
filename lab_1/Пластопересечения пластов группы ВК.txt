@@ -1,3 +1,61 @@
+-- Сначала синхронизируем последовательность pxp.pxp_seq с таблицей WELL_NODE
+DECLARE
+    max_id NUMBER;
+    current_seq_val NUMBER;
+BEGIN
+    -- Находим максимальное значение в WELL_NODE_S
+    SELECT MAX(WELL_NODE_S) INTO max_id FROM WELL_NODE;
+
+    -- Получаем текущее значение последовательности
+    SELECT pxp.pxp_seq.CURRVAL INTO current_seq_val FROM dual;
+
+    -- Если последовательность отстает, продвигаем её значение выше max_id
+    IF current_seq_val <= max_id THEN
+        -- Устанавливаем INCREMENT временно, чтобы продвинуть последовательность
+        EXECUTE IMMEDIATE 'ALTER SEQUENCE pxp.pxp_seq INCREMENT BY ' || (max_id + 1 - current_seq_val);
+        
+        -- Продвигаем последовательность
+        EXECUTE IMMEDIATE 'SELECT pxp.pxp_seq.NEXTVAL FROM dual';
+
+        -- Возвращаем INCREMENT к 1
+        EXECUTE IMMEDIATE 'ALTER SEQUENCE pxp.pxp_seq INCREMENT BY 1';
+    END IF;
+END;
+/
+-- Теперь выполняем вставку данных из таблицы pxp_test.well_node_external
+INSERT INTO WELL_NODE (
+    WELL_NODE_S,
+    WELL_S,
+    RESERVOIR_S,
+    X,
+    Y,
+    TYPE_S,
+    LOADER_TYPE_S
+)
+SELECT 
+    pxp.pxp_seq.NEXTVAL,  -- Генерация нового ID для WELL_NODE_S
+    w.WELL_S,             -- Извлекаем WELL_S из таблицы WELL
+    r.RESERVOIR_S,        -- Извлекаем RESERVOIR_S из таблицы RESERVOIR
+    e.X,                  -- Извлекаем X из pxp_test.well_node_external
+    e.Y,                  -- Извлекаем Y из pxp_test.well_node_external
+    295945703,            -- Тип: пластопересечение
+    148127003             -- Тип загрузчика
+FROM 
+    pxp_test.well_node_external e
+JOIN 
+    pxp.well w 
+    ON w.NAME = e.name1   -- Связываем с таблицей WELL по name1
+JOIN 
+    pxp.reservoir r 
+    ON r.field_s = w.FIELD_S
+    AND r.name = e.name2  -- Связываем с таблицей RESERVOIR по полям field_s и name
+WHERE 
+    e.X IS NOT NULL  -- Дополнительное условие для X
+    AND e.Y IS NOT NULL;  -- Дополнительное условие для Y
+
+
+
+
 -- SELECT * FROM  PXP_TEST.WELL_NODE_EXTERNAL 
 
 --select * from well_node
