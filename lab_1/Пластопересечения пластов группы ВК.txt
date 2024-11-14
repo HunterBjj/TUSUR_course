@@ -1,3 +1,28 @@
+-- SELECT * FROM  PXP_TEST.WELL_NODE_EXTERNAL 
+
+--select * from well_node
+
+INSERT INTO WELL_NODE (
+    WELL_NODE_S,
+    WELL_S,
+    RESERVOIR_S,
+    X,
+    Y,
+    TYPE_S,
+    LOADER_TYPE_S
+)
+     SELECT pxp.pxp_seq.nextval  WELL_NODE_S,
+    (SELECT WELL_S FROM pxp.well WHERE NAME = (SELECT name1 FROM pxp_test.well_node_external))  WELL_S,
+    (SELECT RESERVOIR_S 
+     FROM pxp.reservoir 
+     WHERE field_s IN (SELECT FIELD_S FROM PXP.WELL WHERE NAME = (SELECT name1 FROM pxp_test.well_node_external))
+        AND (name = (SELECT name2 FROM pxp_test.well_node_external)))  RESERVOIR_S,
+    (SELECT X FROM pxp_test.well_node_external)  X,
+    (SELECT Y FROM pxp_test.well_node_external)  Y,
+    295945703  TYPE_S,  --пластопересечение
+    148127003 LOADER_TYPE_S
+    FROM  dual;
+
 INSERT INTO WELL_NODE (
     WELL_NODE_S,
     WELL_S,
