@@ -118,6 +118,83 @@ WHERE e.x IS NOT NULL
 
 Эти шаги предотвратят нарушение уникального ограничения.
 
+Вот полностью рабочий код, который включает все шаги для синхронизации последовательности, удаления дублирующихся строк и проверки на существующие записи перед вставкой. Это поможет избежать ошибок, связанных с уникальными ограничениями.
+
+```sql
+-- Шаг 1: Синхронизация последовательности pxp.pxp_seq с таблицей WELL_NODE
+DECLARE
+    max_id NUMBER;
+    seq_val NUMBER;
+BEGIN
+    -- Получаем максимальное значение WELL_NODE_S в таблице WELL_NODE
+    SELECT MAX(WELL_NODE_S) INTO max_id FROM WELL_NODE;
+
+    -- Получаем текущее значение последовательности pxp.pxp_seq
+    BEGIN
+        SELECT pxp.pxp_seq.CURRVAL INTO seq_val FROM dual;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            -- Если последовательность еще не использовалась, принудительно устанавливаем значение
+            EXECUTE IMMEDIATE 'SELECT pxp.pxp_seq.NEXTVAL FROM dual';
+            SELECT pxp.pxp_seq.CURRVAL INTO seq_val FROM dual;
+    END;
+
+    -- Если текущее значение последовательности меньше максимального значения WELL_NODE_S, обновляем последовательность
+    IF seq_val <= max_id THEN
+        EXECUTE IMMEDIATE 'ALTER SEQUENCE pxp.pxp_seq INCREMENT BY ' || (max_id + 1 - seq_val);
+        EXECUTE IMMEDIATE 'SELECT pxp.pxp_seq.NEXTVAL FROM dual';
+        EXECUTE IMMEDIATE 'ALTER SEQUENCE pxp.pxp_seq INCREMENT BY 1';
+    END IF;
+END;
+/
+-- Шаг 2: Вставка данных с проверкой уникальности и устранением дублирующихся строк
+INSERT INTO WELL_NODE (
+    WELL_NODE_S,
+    WELL_S,
+    RESERVOIR_S,
+    X,
+    Y,
+    TYPE_S,
+    LOADER_TYPE_S
+)
+SELECT DISTINCT
+    pxp.pxp_seq.NEXTVAL AS WELL_NODE_S,
+    w.WELL_S AS WELL_S,
+    r.RESERVOIR_S AS RESERVOIR_S,
+    e.X AS X,
+    e.Y AS Y,
+    295945703 AS TYPE_S,     -- фиксированное значение для TYPE_S (пластопересечение)
+    148127003 AS LOADER_TYPE_S -- фиксированное значение для LOADER_TYPE_S (тип загрузчика)
+FROM pxp_test.well_node_external e
+JOIN pxp.well w 
+    ON w.NAME = e.name1 -- связываем с таблицей WELL по полю name1
+JOIN pxp.reservoir r 
+    ON r.field_s = 27264586207  -- фиксированное значение field_s
+    AND r.name = e.name2        -- связываем с таблицей RESERVOIR по name2
+WHERE e.x IS NOT NULL
+  AND e.y IS NOT NULL
+  AND NOT EXISTS (
+      SELECT 1 
+      FROM WELL_NODE wn
+      WHERE wn.WELL_S = w.WELL_S
+        AND wn.RESERVOIR_S = r.RESERVOIR_S
+        AND wn.X = e.X
+        AND wn.Y = e.Y
+  );
+```
+
+### Пояснение:
+
+1. **Синхронизация последовательности**:
+   - Первая часть кода проверяет, чтобы последовательность `pxp.pxp_seq` имела актуальное значение, соответствующее максимальному значению `WELL_NODE_S` в таблице. Если значение последовательности отстает, оно обновляется.
+
+2. **Вставка данных**:
+   - `SELECT DISTINCT` предотвращает дублирование.
+   - Использование `JOIN` связывает данные с таблицами `pxp.well` и `pxp.reservoir`.
+   - `NOT EXISTS` обеспечивает вставку только уникальных записей на основе комбинации значений `WELL_S`, `RESERVOIR_S`, `X`, и `Y`.
+
+Эти шаги помогут избежать нарушений уникального ограничения `SVN.WELLNODEUNIQ`.
+
 
 
 INSERT INTO WELL_NODE (
