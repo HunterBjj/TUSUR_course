@@ -1,3 +1,31 @@
+INSERT INTO WELL_NODE (
+        WELL_NODE_S,
+        WELL_S,
+        RESERVOIR_S,
+        X,
+        Y,
+        TYPE_S,
+        LOADER_TYPE_S
+    )
+    SELECT pxp.pxp_seq.nextval WELL_NODE_S,
+    w.WELL_S  WELL_S,
+    r.reservoir_s RESERVOIR_S,
+    e.x X,
+    e.y  Y,
+    295945703 TYPE_S,  --пластопересечение
+    148127003 LOADER_TYPE_S
+    FROM pxp_test.well_node_external e
+    JOIN pxp.well w ON w.name = e.name1 -- связываем с таблицуй well по name 1
+    JOIN pxp.reservoir r ON (r.field_s = 27264586207) AND (r.name = e.name2)
+    WHERE e.x IS NOT NULL AND e.y IS NOT NULL
+      -- Дополнительное условие для Y
+  -- связываем с таблицей RESERVOIR по полям field_s, name
+  --SELECT * FROM WELL_NODE
+Error at line 3
+ORA-00001: unique constraint (SVN.WELLNODEUNIQ) violated
+
+
+
 -- Сначала синхронизируем последовательность pxp.pxp_seq с таблицей WELL_NODE
 DECLARE
     max_id NUMBER;
