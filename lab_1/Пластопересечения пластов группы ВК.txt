@@ -1,3 +1,125 @@
+Ошибка `ORA-00001: unique constraint (SVN.WELLNODEUNIQ) violated` указывает на то, что при попытке вставить данные в таблицу `WELL_NODE`, нарушается уникальное ограничение, определенное на уровне таблицы.
+
+### Причины ошибки
+1. **Дублирующиеся данные:**
+   - В таблице `pxp_test.well_node_external` есть строки, которые при сопоставлении с `pxp.well` и `pxp.reservoir` генерируют дублирующиеся комбинации значений.
+   - Уникальное ограничение `SVN.WELLNODEUNIQ` требует, чтобы комбинация определенных столбцов была уникальной (например, `WELL_S`, `RESERVOIR_S`, `X`, `Y` или других столбцов, на которые наложено ограничение).
+
+2. **Некорректная генерация данных для `WELL_NODE_S`:**
+   - Если последовательность `pxp.pxp_seq` не синхронизирована с текущими значениями в таблице, возможно нарушение уникальности по первичному ключу (обычно `WELL_NODE_S`).
+
+---
+
+### Решение
+
+#### 1. Убедитесь, что последовательность `pxp.pxp_seq` синхронизирована
+Проверьте, что значение последовательности больше текущего максимального значения `WELL_NODE_S`:
+
+```sql
+DECLARE
+    max_id NUMBER;
+    seq_val NUMBER;
+BEGIN
+    -- Находим максимальное значение WELL_NODE_S
+    SELECT MAX(WELL_NODE_S) INTO max_id FROM WELL_NODE;
+
+    -- Проверяем текущее значение последовательности
+    SELECT pxp.pxp_seq.CURRVAL INTO seq_val FROM dual;
+
+    -- Если последовательность отстает, синхронизируем её
+    IF seq_val <= max_id THEN
+        EXECUTE IMMEDIATE 'ALTER SEQUENCE pxp.pxp_seq INCREMENT BY ' || (max_id + 1 - seq_val);
+        EXECUTE IMMEDIATE 'SELECT pxp.pxp_seq.NEXTVAL FROM dual';
+        EXECUTE IMMEDIATE 'ALTER SEQUENCE pxp.pxp_seq INCREMENT BY 1';
+    END IF;
+END;
+/
+```
+
+---
+
+#### 2. Удалите дублирующиеся строки
+Используйте `DISTINCT` в запросе для предотвращения дублирования строк:
+
+```sql
+INSERT INTO WELL_NODE (
+    WELL_NODE_S,
+    WELL_S,
+    RESERVOIR_S,
+    X,
+    Y,
+    TYPE_S,
+    LOADER_TYPE_S
+)
+SELECT DISTINCT
+    pxp.pxp_seq.NEXTVAL AS WELL_NODE_S,
+    w.WELL_S AS WELL_S,
+    r.RESERVOIR_S AS RESERVOIR_S,
+    e.X AS X,
+    e.Y AS Y,
+    295945703 AS TYPE_S,
+    148127003 AS LOADER_TYPE_S
+FROM pxp_test.well_node_external e
+JOIN pxp.well w 
+    ON w.NAME = e.name1
+JOIN pxp.reservoir r 
+    ON r.field_s = 27264586207
+    AND r.name = e.name2
+WHERE e.x IS NOT NULL
+  AND e.y IS NOT NULL;
+```
+
+---
+
+#### 3. Проверка существующих записей перед вставкой
+Добавьте условие, чтобы вставлять только те записи, которые еще не существуют в таблице `WELL_NODE`:
+
+```sql
+INSERT INTO WELL_NODE (
+    WELL_NODE_S,
+    WELL_S,
+    RESERVOIR_S,
+    X,
+    Y,
+    TYPE_S,
+    LOADER_TYPE_S
+)
+SELECT pxp.pxp_seq.NEXTVAL AS WELL_NODE_S,
+       w.WELL_S AS WELL_S,
+       r.RESERVOIR_S AS RESERVOIR_S,
+       e.X AS X,
+       e.Y AS Y,
+       295945703 AS TYPE_S,
+       148127003 AS LOADER_TYPE_S
+FROM pxp_test.well_node_external e
+JOIN pxp.well w 
+    ON w.NAME = e.name1
+JOIN pxp.reservoir r 
+    ON r.field_s = 27264586207
+    AND r.name = e.name2
+WHERE e.x IS NOT NULL
+  AND e.y IS NOT NULL
+  AND NOT EXISTS (
+      SELECT 1 
+      FROM WELL_NODE wn
+      WHERE wn.WELL_S = w.WELL_S
+        AND wn.RESERVOIR_S = r.RESERVOIR_S
+        AND wn.X = e.X
+        AND wn.Y = e.Y
+  );
+```
+
+---
+
+### Итог
+1. Убедитесь, что последовательность синхронизирована.
+2. Используйте `DISTINCT`, чтобы убрать дублирующиеся строки в запросе.
+3. Добавьте проверку существования записей через `NOT EXISTS`.
+
+Эти шаги предотвратят нарушение уникального ограничения.
+
+
+
 INSERT INTO WELL_NODE (
         WELL_NODE_S,
         WELL_S,
