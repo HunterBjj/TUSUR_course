@@ -1,3 +1,28 @@
+SELECT DISTINCT
+    wn.WELL_NODE_S,
+    wn.WELL_S,
+    wn.RESERVOIR_S,
+    wn.X,
+    wn.Y,
+    wn.TYPE_S,
+    wn.LOADER_TYPE_S
+FROM pxp_test.well_node_external e
+JOIN pxp.well w 
+    ON w.NAME = e.name1
+JOIN pxp.reservoir r 
+    ON r.field_s = 27264586207
+    AND r.name = e.name2
+JOIN WELL_NODE wn
+    ON wn.WELL_S = w.WELL_S
+    AND wn.RESERVOIR_S = r.RESERVOIR_S
+    AND wn.X = e.X
+    AND wn.Y = e.Y
+WHERE e.X IS NOT NULL
+  AND e.Y IS NOT NULL;
+
+
+
+
 Ошибка `ORA-00001: unique constraint (SVN.WELLNODEUNIQ) violated` указывает на то, что при попытке вставить данные в таблицу `WELL_NODE`, нарушается уникальное ограничение, определенное на уровне таблицы.
 
 ### Причины ошибки
