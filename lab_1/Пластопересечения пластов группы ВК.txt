@@ -1,3 +1,27 @@
+--SELECT * FROM SVN.WELL_MONTH_HIST 
+SELECT pxp.pxp_seq.nextval WELL_MONTH_HIST_S,
+                               e.PROD_DATE PROD_DATE,
+                               w.WELL_S    WELL_S,
+                          r.reservoir_s    RESERVOIR_S,
+                                  26690 PROD_CLASS_S,
+                               d.DICT_S PROD_METHOD_S,
+                                       e.OIL    OIL,
+                                   e.WATER    WATER,
+                      TRUNC(e.WATER / 1.006, 3)    WATER_V,
+                                       e.GAZ GAZ,
+  TRUNC(((e.OIL / 0.811) + (e.WATER / 1.006)), 3) LIQUID,
+                      (e.OIL + e.WATER)    LIQUID_M,
+  TRUNC(((e.OIL / 0.811) + (e.WATER / 1.006)), 3 ) LIQUID_SURF,
+         (SELECT  EXTRACT(LAST_DAY(e.PROD_DATE, 'dd.mm.yyyy') FROM DUAL) - (e.COUNTDAY * 24) ACT_TIME,
+          TRUNC((31 * 24) - (e.COUNTDAY * 24), 3 ) INACT_TIME,
+                                         0 ACC_TIME,
+                                 148011703 LOADER_TYPE_S,
+                        'Данные из Э/К' DESCRIPION
+        FROM pxp_test.well_month_external e
+        JOIN pxp.well w ON (FIELD_S = 27264586707) AND (NAME = 13) -- FIXME связываем с таблицуй well по name 1
+        JOIN pxp.reservoir r ON (r.FIELD_S = 27264586707) AND (r.name = e.NAMEPLAST) -- FIXME связываем с таблицей RESERVOIR по полям field_s, name
+        JOIN pxp.dict d ON PARENT_S = 3350 AND SHORT_NAME = e.nameoperation
+
 SELECT DISTINCT
     wn.WELL_NODE_S,
     wn.WELL_S,
