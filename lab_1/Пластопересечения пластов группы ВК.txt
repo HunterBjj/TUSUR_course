@@ -1,3 +1,69 @@
+Чтобы удалить все файлы из папки формата BFILE, кроме тех, которые есть в столбце, можно использовать следующий скрипт PL/SQL:
+
+```sql
+DECLARE
+  v_file UTL_FILE.FILE_TYPE;
+  v_filename VARCHAR2(255);
+  v_dir VARCHAR2(255) := 'ПУТЬ_К_ПАПКЕ'; -- замените на путь к папке
+  v_file_to_keep VARCHAR2(255);
+
+  CURSOR c_files IS
+    SELECT filename FROM your_table WHERE filename IS NOT NULL; -- замените на имя таблицы и столбца
+
+BEGIN
+  v_file := UTL_FILE.FOPEN(v_dir, 'r');
+
+  LOOP
+    BEGIN
+      UTL_FILE.GET_LINE(v_file, v_filename);
+      v_file_to_keep := NULL;
+
+      FOR rec IN c_files LOOP
+        IF rec.filename = v_filename THEN
+          v_file_to_keep := rec.filename;
+          EXIT;
+        END IF;
+      END LOOP;
+
+      IF v_file_to_keep IS NULL THEN
+        UTL_FILE.FREMOVE(v_dir, v_filename);
+        DBMS_OUTPUT.PUT_LINE('Удалён файл:'|| v_filename);
+      END IF;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        EXIT;
+    END;
+  END LOOP;
+
+  UTL_FILE.FCLOSE(v_file);
+EXCEPTION
+  WHEN UTL_FILE.INVALID_PATH THEN
+    DBMS_OUTPUT.PUT_LINE('Недействительный путь');
+  WHEN UTL_FILE.INVALID_MODE THEN
+    DBMS_OUTPUT.PUT_LINE('Недопустимый режим');
+  WHEN UTL_FILE.INVALID_OPERATION THEN
+    DBMS_OUTPUT.PUT_LINE('Недопустимая операция');
+END;
+```
+
+В этом скрипте:
+
+*   `v_dir` — путь к папке, из которой нужно удалить файлы.
+*   `c_files` — курсор, который выбирает имена файлов из столбца `filename` таблицы `your_table`.
+*   `v_file_to_keep` — переменная, которая принимает значение `NULL`, если файл не найден в столбце `filename`, и значение имени файла, если файл найден.
+
+Скрипт работает следующим образом:
+
+1.  Открывает папку в режиме чтения.
+2.  Перебирает все файлы в папке.
+3.  Для каждого файла проверяет, есть ли он в столбце `filename` таблицы `your_table`.
+4.  Если файл не найден в столбце, удаляет его из папки.
+5.  Закрывает папку.
+
+Прежде чем запускать скрипт, замените `ПУТЬ_К_ПАПКЕ` на путь к папке, из которой нужно удалить файлы, и `your_table` и `filename` на имя таблицы и столбца, содержащего имена файлов, которые нужно сохранить.
+
+
+
 insert into svn.well_stock_hist(WELL_STOCK_HIST_S,WELL_S,STATUS_DATE, PROD_CLASS_S,PROD_METHOD_S,STATUS_S,LOADER_TYPE_S, RESERVOIR_SET_S ) 	select pxp.pxp_seq.nextval WELL_STOCK_HIST_S, 27264736407 WELL_S, to_date ( SUBSTR(TRIM('	01.06.1997	'),   4, 10 ),  'MM.YYYY') STATUS_DATE, 26690 PROD_CLASS_S, 	140350	 PROD_METHOD_S, 86070 STATUS_S, 148011703 LOADER_TYPE_S, 	27269626407	 RESERVOIR_SET_S from dual	insert into svn.well_stock_hist(WELL_STOCK_HIST_S,WELL_S,STATUS_DATE, PROD_CLASS_S,PROD_METHOD_S,STATUS_S,LOADER_TYPE_S, RESERVOIR_SET_S ) select pxp.pxp_seq.nextval WELL_STOCK_HIST_S, 27264736407 WELL_S, to_date ( SUBSTR(TRIM('35582'),   4, 10 ),  'MM.YYYY') STATUS_DATE, 26690 PROD_CLASS_S, 140350 PROD_METHOD_S, 86070 STATUS_S, 148011703 LOADER_TYPE_S, 27269626407 RESERVOIR_SET_S from dual
 insert into svn.well_stock_hist(WELL_STOCK_HIST_S,WELL_S,STATUS_DATE, PROD_CLASS_S,PROD_METHOD_S,STATUS_S,LOADER_TYPE_S, RESERVOIR_SET_S ) 	select pxp.pxp_seq.nextval WELL_STOCK_HIST_S, 27264736407 WELL_S, to_date ( SUBSTR(TRIM('	01.03.1999	'),   4, 10 ),  'MM.YYYY') STATUS_DATE, 26690 PROD_CLASS_S, 	140350	 PROD_METHOD_S, 86070 STATUS_S, 148011703 LOADER_TYPE_S, 	27269626407	 RESERVOIR_SET_S from dual	insert into svn.well_stock_hist(WELL_STOCK_HIST_S,WELL_S,STATUS_DATE, PROD_CLASS_S,PROD_METHOD_S,STATUS_S,LOADER_TYPE_S, RESERVOIR_SET_S ) select pxp.pxp_seq.nextval WELL_STOCK_HIST_S, 27264736407 WELL_S, to_date ( SUBSTR(TRIM('36220'),   4, 10 ),  'MM.YYYY') STATUS_DATE, 26690 PROD_CLASS_S, 140350 PROD_METHOD_S, 86070 STATUS_S, 148011703 LOADER_TYPE_S, 27269626407 RESERVOIR_SET_S from dual
 insert into svn.well_stock_hist(WELL_STOCK_HIST_S,WELL_S,STATUS_DATE, PROD_CLASS_S,PROD_METHOD_S,STATUS_S,LOADER_TYPE_S, RESERVOIR_SET_S ) 	select pxp.pxp_seq.nextval WELL_STOCK_HIST_S, 27264736407 WELL_S, to_date ( SUBSTR(TRIM('	01.04.1999	'),   4, 10 ),  'MM.YYYY') STATUS_DATE, 26690 PROD_CLASS_S, 	140350	 PROD_METHOD_S, 86070 STATUS_S, 148011703 LOADER_TYPE_S, 	27269626407	 RESERVOIR_SET_S from dual	insert into svn.well_stock_hist(WELL_STOCK_HIST_S,WELL_S,STATUS_DATE, PROD_CLASS_S,PROD_METHOD_S,STATUS_S,LOADER_TYPE_S, RESERVOIR_SET_S ) select pxp.pxp_seq.nextval WELL_STOCK_HIST_S, 27264736407 WELL_S, to_date ( SUBSTR(TRIM('36251'),   4, 10 ),  'MM.YYYY') STATUS_DATE, 26690 PROD_CLASS_S, 140350 PROD_METHOD_S, 86070 STATUS_S, 148011703 LOADER_TYPE_S, 27269626407 RESERVOIR_SET_S from dual
