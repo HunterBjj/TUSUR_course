@@ -1,3 +1,73 @@
+alter tablespace users drop datafile 'C:\ORACLE\ORADATA\ORCL\DATAFILE\O1_MF_USERS_6LD56LRR_.DBF';
+
+Чтобы удалить все файлы из папки формата BFILE, кроме тех, которые есть в столбце, можно использовать следующий скрипт PL/SQL:
+
+```sql
+DECLARE
+  v_file UTL_FILE.FILE_TYPE;
+  v_filename VARCHAR2(255);
+  v_dir VARCHAR2(255) := 'ПУТЬ_К_ПАПКЕ'; -- TODO замените на путь к папке!
+  v_file_to_keep VARCHAR2(255);
+
+  CURSOR c_files IS
+    SELECT FILE_BODY FROM CENTER.C_ALL_SOURCE WHERE SOURCE_SCHEMA = 'VTK'; -- TODO замените на имя таблицы и столбца
+
+BEGIN
+  v_file := UTL_FILE.FOPEN(v_dir, 'r');
+
+  LOOP
+    BEGIN
+      UTL_FILE.GET_LINE(v_file, v_filename);
+      v_file_to_keep := NULL;
+
+      FOR rec IN c_files LOOP
+        IF rec.FILE_BODY = v_filename THEN
+          v_file_to_keep := rec.FILE_BODY;
+          EXIT;
+        END IF;
+      END LOOP;
+
+      IF v_file_to_keep IS NULL THEN
+        UTL_FILE.FREMOVE(v_dir, v_filename);
+        DBMS_OUTPUT.PUT_LINE('Удалён файл:'|| v_filename);
+      END IF;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        EXIT;
+    END;
+  END LOOP;
+
+  UTL_FILE.FCLOSE(v_file);
+EXCEPTION
+  WHEN UTL_FILE.INVALID_PATH THEN
+    DBMS_OUTPUT.PUT_LINE('Недействительный путь');
+  WHEN UTL_FILE.INVALID_MODE THEN
+    DBMS_OUTPUT.PUT_LINE('Недопустимый режим');
+  WHEN UTL_FILE.INVALID_OPERATION THEN
+    DBMS_OUTPUT.PUT_LINE('Недопустимая операция');
+END;
+```
+
+В этом скрипте:
+
+*   `v_dir` — путь к папке, из которой нужно удалить файлы.
+*   `c_files` — курсор, который выбирает имена файлов из столбца `filename` таблицы `your_table`.
+*   `v_file_to_keep` — переменная, которая принимает значение `NULL`, если файл не найден в столбце `filename`, и значение имени файла, если файл найден.
+
+Скрипт работает следующим образом:
+
+1.  Открывает папку в режиме чтения.
+2.  Перебирает все файлы в папке.
+3.  Для каждого файла проверяет, есть ли он в столбце `filename` таблицы `your_table`.
+4.  Если файл не найден в столбце, удаляет его из папки.
+5.  Закрывает папку.
+
+Прежде чем запускать скрипт, замените `ПУТЬ_К_ПАПКЕ` на путь к папке, из которой нужно удалить файлы, и `your_table` и `filename` на имя таблицы и столбца, содержащего имена файлов, которые нужно сохранить.
+
+
+
+
+
 Чтобы удалить все файлы из папки формата BFILE, кроме тех, которые есть в столбце, можно использовать следующий скрипт PL/SQL:
 
 ```sql
