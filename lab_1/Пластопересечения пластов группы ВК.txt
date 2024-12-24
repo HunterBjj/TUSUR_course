@@ -1,3 +1,12 @@
+SELECT w.name as Скважина, min(s.name) as Слой, 
+f.Name as Месторождение, 
+l.top as Верхняя_отметка_пласта 
+FROM SVN.WELL_LOG_RESULT_LAYER l 
+JOIN pxp.well w on w.well_s = l.well_s join svn.layer s on s.layer_s = l.layer_s 
+join pxp.field f on f.field_s = s.field_s  
+group by f.name
+
+
 alter tablespace users drop datafile 'C:\ORACLE\ORADATA\ORCL\DATAFILE\O1_MF_USERS_6LD56LRR_.DBF';
 
 Чтобы удалить все файлы из папки формата BFILE, кроме тех, которые есть в столбце, можно использовать следующий скрипт PL/SQL:
