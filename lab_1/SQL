@@ -1,3 +1,64 @@
+Проблема с вашим запросом `UPDATE` заключается в том, что в подзапросе, используемом в конструкции `SET (WN.X, WN.Y) = (select x.x, x.y from ...)`, отсутствует ссылка на таблицу `WELL_NODE` (WN). Это приводит к ошибке, так как подзапрос не знает, с какими строками таблицы `WELL_NODE` он должен работать.
+
+### Исправленный `UPDATE` запрос
+
+```sql
+UPDATE WELL_NODE WN 
+SET (WN.X, WN.Y) = (
+    SELECT x.x, x.y 
+    FROM pxp_test.xy x 
+    JOIN pxp.well w ON w.well_s = WN.well_s AND w.field_s = 537958901 
+    WHERE x.reservoir_s = WN.reservoir_s AND w.name = x.well
+)
+WHERE EXISTS (
+    SELECT * 
+    FROM PXP_TEST.XY TST 
+    WHERE WN.well_s = (
+        SELECT w.well_s 
+        FROM pxp.well w 
+        WHERE w.name = TST.well AND w.field_s = 537958901
+    ) 
+    AND WN.type_s = TST.type_s 
+    AND WN.reservoir_s = TST.reservoir_s
+);
+```
+
+### Объяснение
+
+1. **Подзапрос в `SET`**:
+   - В подзапросе `SELECT x.x, x.y FROM pxp_test.xy x JOIN pxp.well w ON w.well_s = WN.well_s AND w.field_s = 537958901 WHERE x.reservoir_s = WN.reservoir_s AND w.name = x.well` используется таблица `WELL_NODE` (WN) для связи с таблицами `pxp_test.xy` и `pxp.well`.
+   - Это обеспечивает корректное сопоставление строк для обновления.
+
+2. **Подзапрос в `WHERE EXISTS`**:
+   - В подзапросе `WHERE EXISTS` также используется таблица `WELL_NODE` (WN) для проверки условий, которые должны выполняться для обновления строк.
+
+### Дополнительные советы
+
+- **Индексирование**: Убедитесь, что у вас есть индексы на столбцы, используемые в условиях соединения и фильтрации, чтобы улучшить производительность запроса.
+- **Проверка данных**: Перед выполнением `UPDATE` запроса, рекомендуется выполнить `SELECT` запрос с теми же условиями, чтобы убедиться, что вы обновляете именно те строки, которые ожидали.
+
+### Пример проверочного `SELECT` запроса
+
+```sql
+SELECT WN.*, x.x, x.y
+FROM WELL_NODE WN
+JOIN pxp_test.xy x ON x.reservoir_s = WN.reservoir_s
+JOIN pxp.well w ON w.well_s = WN.well_s AND w.field_s = 537958901 AND w.name = x.well
+WHERE EXISTS (
+    SELECT * 
+    FROM PXP_TEST.XY TST 
+    WHERE WN.well_s = (
+        SELECT w.well_s 
+        FROM pxp.well w 
+        WHERE w.name = TST.well AND w.field_s = 537958901
+    ) 
+    AND WN.type_s = TST.type_s 
+    AND WN.reservoir_s = TST.reservoir_s
+);
+```
+
+Этот запрос поможет вам увидеть, какие строки будут обновлены и какие значения будут установлены.
+
 UPDATE WELL_NODE WN SET (WN.X, WN.Y) = (select x.x, x.y from pxp_test.xy x join pxp.well w on w.well_s = WN.well_s and w.field_s = 537958901 where x.reservoir_s = WN.reservoir_s and w.name = x.well)
 where exists(select * from PXP_TEST.XY TST 
 WHERE WN.well_s = (select w.well_s from pxp.well w where w.name = TST.well and w.field_S = 537958901) 
