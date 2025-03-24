@@ -1,3 +1,12 @@
+UPDATE WELL_NODE WN SET (WN.X, WN.Y) = (select x.x, x.y from pxp_test.xy x join pxp.well w on w.well_s = WN.well_s and w.field_s = 537958901 where x.reservoir_s = WN.reservoir_s and w.name = x.well)
+where exists(select * from PXP_TEST.XY TST 
+WHERE WN.well_s = (select w.well_s from pxp.well w where w.name = TST.well and w.field_S = 537958901) 
+and WN.type_s = TST.type_s 
+and WN.reservoir_s = TST.reservoir_s)
+
+
+
+
 select 
             --основная часть 
                 rphdr.research_pgi_hdr_s, 
