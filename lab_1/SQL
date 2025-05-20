@@ -1,112 +1,254 @@
-Проблема с вашим запросом `UPDATE` заключается в том, что в подзапросе, используемом в конструкции `SET (WN.X, WN.Y) = (select x.x, x.y from ...)`, отсутствует ссылка на таблицу `WELL_NODE` (WN). Это приводит к ошибке, так как подзапрос не знает, с какими строками таблицы `WELL_NODE` он должен работать.
+  public static void wellUpdate(
+            SessionBean bean, long wellId, long admObjectId, string uwi, string wellName, string wellNameEng,
+            string rigName, string rigNameEng, double? drillersTd, double? elevation, DateTime? spudDate,
+            DateTime? finDrill,
+            DateTime? compDate, DateTime? onProd, long? domeId, double? projtd,
+            long? initialClassId, long? contractorId, long? isHoriz, DateTime? onInject, long orderNumber, long wellFirstId, double? elevationKb, long? elevationRf)
+        {
+            try{
+                var parameters = new OracleParameterCollection();
+                parameters.AddWithValue("well_s_", CommonUtil.toDbId(wellId));
+                parameters.AddWithValue("admObject_s_", CommonUtil.toDbId(admObjectId));
+                parameters.AddWithValue("uwi_", CommonUtil.toDbStr(uwi));
+                parameters.AddWithValue("wellName_", CommonUtil.toDbStr(wellName));
+                parameters.AddWithValue("wellName_eng_", CommonUtil.toDbStr(wellNameEng));
+                parameters.AddWithValue("rigName_", CommonUtil.toDbStr(rigName));
+                parameters.AddWithValue("rigName_eng_", CommonUtil.toDbStr(rigNameEng));
+                parameters.AddWithValue("drillersTd_", CommonUtil.toDbDouble(drillersTd));
+                parameters.AddWithValue("elevation_", CommonUtil.toDbDouble(elevation));
+                parameters.AddWithValue("spudDate_", CommonUtil.toDbDate(spudDate));
+                parameters.AddWithValue("finDrill_", CommonUtil.toDbDate(finDrill));
+                parameters.AddWithValue("compDate_", CommonUtil.toDbDate(compDate));
+                parameters.AddWithValue("OnProd_", CommonUtil.toDbDate(onProd));
+                parameters.AddWithValue("dome_s_", CommonUtil.toDbId(domeId)).OracleType = OracleType.Number;
+                parameters.AddWithValue("proj_td_", CommonUtil.toDbDouble(projtd)).OracleType = OracleType.Number;
+                parameters.AddWithValue("initial_class_s_", CommonUtil.toDbId(initialClassId)).OracleType = OracleType.Number;
+                parameters.AddWithValue("contractor_s_", CommonUtil.toDbId(contractorId)).OracleType = OracleType.Number;
+                parameters.AddWithValue("is_horizontal_", CommonUtil.toDbId(isHoriz)).OracleType = OracleType.Number;
+                parameters.AddWithValue("oninject_", CommonUtil.toDbDate(onInject));
+                parameters.AddWithValue("order_number_", CommonUtil.toDbId(orderNumber));
+                parameters.AddWithValue("well_first_s_", CommonUtil.toDbId(wellFirstId));
+                parameters.AddWithValue("elevation_kb_", CommonUtil.toDbDouble(elevationKb)).OracleType = OracleType.Number;
+                parameters.AddWithValue("elevation_ref_", CommonUtil.toDbId(elevationRf)).OracleType = OracleType.Number;
+                string functionName = string.Format("{0}.wellUpdate", ((PXPApplicationBean)bean.AppBean).PxpPackage);
+                bean.Ora.executeProcedure(functionName, parameters);
+            } catch(Exception ex){
+                log.Error(ex.Message, ex);
+                throw new ApplicationException("Ошибка при изменении скважины: " + ex.Message); 
+            }
+        }
 
-### Исправленный `UPDATE` запрос
-
-```sql
-UPDATE WELL_NODE WN 
-SET (WN.X, WN.Y) = (
-    SELECT x.x, x.y 
-    FROM pxp_test.xy x 
-    JOIN pxp.well w ON w.well_s = WN.well_s AND w.field_s = 537958901 
-    WHERE x.reservoir_s = WN.reservoir_s AND w.name = x.well
-)
-WHERE EXISTS (
-    SELECT * 
-    FROM PXP_TEST.XY TST 
-    WHERE WN.well_s = (
-        SELECT w.well_s 
-        FROM pxp.well w 
-        WHERE w.name = TST.well AND w.field_s = 537958901
-    ) 
-    AND WN.type_s = TST.type_s 
-    AND WN.reservoir_s = TST.reservoir_s
-);
-```
-
-### Объяснение
-
-1. **Подзапрос в `SET`**:
-   - В подзапросе `SELECT x.x, x.y FROM pxp_test.xy x JOIN pxp.well w ON w.well_s = WN.well_s AND w.field_s = 537958901 WHERE x.reservoir_s = WN.reservoir_s AND w.name = x.well` используется таблица `WELL_NODE` (WN) для связи с таблицами `pxp_test.xy` и `pxp.well`.
-   - Это обеспечивает корректное сопоставление строк для обновления.
-
-2. **Подзапрос в `WHERE EXISTS`**:
-   - В подзапросе `WHERE EXISTS` также используется таблица `WELL_NODE` (WN) для проверки условий, которые должны выполняться для обновления строк.
-
-### Дополнительные советы
-
-- **Индексирование**: Убедитесь, что у вас есть индексы на столбцы, используемые в условиях соединения и фильтрации, чтобы улучшить производительность запроса.
-- **Проверка данных**: Перед выполнением `UPDATE` запроса, рекомендуется выполнить `SELECT` запрос с теми же условиями, чтобы убедиться, что вы обновляете именно те строки, которые ожидали.
-
-### Пример проверочного `SELECT` запроса
-
-```sql
-SELECT WN.*, x.x, x.y
-FROM WELL_NODE WN
-JOIN pxp_test.xy x ON x.reservoir_s = WN.reservoir_s
-JOIN pxp.well w ON w.well_s = WN.well_s AND w.field_s = 537958901 AND w.name = x.well
-WHERE EXISTS (
-    SELECT * 
-    FROM PXP_TEST.XY TST 
-    WHERE WN.well_s = (
-        SELECT w.well_s 
-        FROM pxp.well w 
-        WHERE w.name = TST.well AND w.field_s = 537958901
-    ) 
-    AND WN.type_s = TST.type_s 
-    AND WN.reservoir_s = TST.reservoir_s
-);
-```
-
-Этот запрос поможет вам увидеть, какие строки будут обновлены и какие значения будут установлены.
-
-UPDATE WELL_NODE WN SET (WN.X, WN.Y) = (select x.x, x.y from pxp_test.xy x join pxp.well w on w.well_s = WN.well_s and w.field_s = 537958901 where x.reservoir_s = WN.reservoir_s and w.name = x.well)
-where exists(select * from PXP_TEST.XY TST 
-WHERE WN.well_s = (select w.well_s from pxp.well w where w.name = TST.well and w.field_S = 537958901) 
-and WN.type_s = TST.type_s 
-and WN.reservoir_s = TST.reservoir_s)
+      public void wellUpdate(long wellId, long admObjectId, string uwi, string wellName, string wellNameEng,
+            string rigName, string rigNameEng, double? drillersTd, double? elevation,
+            long? spudDateTick, long? finDrillTick,
+            long? compDateTick, long? onProdTick, 
+            long? domeId, double? projtd,
+            long? initialClassId, long? contractorId, long? isHoriz, long? onInjectTick, long orderNumber, long wellFirstId, double? elevationKb, long? elevationRf) {
+            try {
+                DateTime? spudDate = CommonUtil.toDate(spudDateTick);
+                DateTime? finDrill = CommonUtil.toDate(finDrillTick);
+                DateTime? compDate = CommonUtil.toDate(compDateTick);
+                DateTime? onProd = CommonUtil.toDate(onProdTick);
+                DateTime? onInject = CommonUtil.toDate(onInjectTick);
+                DictHelper.wellUpdate(getBean(), wellId, admObjectId, uwi, wellName, wellNameEng,
+                    rigName, rigNameEng, drillersTd, elevation, spudDate, finDrill,
+                    compDate, onProd, domeId, projtd, initialClassId, contractorId, isHoriz, onInject, orderNumber, wellFirstId, elevationKb, elevationRf);
+                getBean().Ora.commit();
+            } catch (Exception ex) {
+                getBean().Ora.rollback();
+                Log.Error(ex.Message, ex);
+                throw GenerateException("Ошибка при изменении скважины", ex);
+            }
+        }
 
 
 
 
-select 
-            --основная часть 
-                rphdr.research_pgi_hdr_s, 
-                well_s,
-                (select name from pxp.dict where dict_s = (select class_s from pxp.well where well_s = rphdr.well_s)) as class_desc,
-                (select name from pxp.well where well_s = rphdr.well_s) as well_desc,
-                field_s,
-                CASE 
-                WHEN (select a.name from pxp.field where field_s = rphdr.field_s) = 'Поттымско-Ингинское' OR (select name from pxp.field where field_s = rphdr.field_s) = 'Восточно-Ингинское' THEN '(пл.Ингинская)Красноленинское' 
-                WHEN(select name from pxp.field where field_s = rphdr.field_s) = 'Лебяжье' THEN '(пл.Лебяжье)Красноленинское'
-                WHEN(select name from pxp.field where field_s = rphdr.field_s) = 'Пальяновское' THEN '(пл.Лебяжье)Красноленинское'
-                WHEN(select name from pxp.field where field_s = rphdr.field_s) = 'Краснолененское' THEN '(пл.Нягань)Красноленинское'
-                else (select name from pxp.field where field_s = rphdr.field_s) end field_desc,
-                 (select field_code  from pxp.field where field_s = rphdr.field_s) as field_code,
-                (select fld.adm_object_s from pxp.field fld where fld.field_s = rphdr.field_s) as adm_object_s,
-                ' ' as adm_object_desc,
-                wellbore_num, research_date, pgi_complex, 
-                pgi_type_s,
-                (select name from pxp.dict where dict_s = rphdr.pgi_type_s) as pgi_type_desc,
-                curr_depth, obs_depth, 
-                total_rate, description, 
-                prod_class_s,
-                (select name from pxp.dict where dict_s = rphdr.prod_class_s) as prod_class_desc, 
-                add_purpose_s,
-                (select name from pxp.dict where dict_s = rphdr.add_purpose_s) as add_purpose_desc,
-                condition_s,
-                (select name from pxp.dict where dict_s = rphdr.condition_s) as condition_desc, 
-                result_s,
-                (select name from pxp.dict where dict_s = rphdr.result_s) as result_desc,  
-                infow_char_begin_s,
-                (select name from pxp.dict where dict_s = rphdr.infow_char_begin_s) as infow_char_begin_desc,
-                infow_char_curr_s,
-                (select name from pxp.dict where dict_s = rphdr.infow_char_curr_s) as infow_char_curr_desc,
-                reliability_s,
-                (select name from pxp.dict where dict_s = rphdr.reliability_s) as reliability_desc, 
-                cause_s,
-                (select name from pxp.dict where dict_s = rphdr.cause_s) as cause_desc, 
-                contractor_s,
-                (select name from pxp.dict where dict_s = rphdr.contractor_s) as contractor_desc
-            from SVN.research_pgi_hdr rphdr
-     
-            order by rphdr.research_date desc 
+
+
+
+
+  public override bool saveData() {
+            // Строка данных должны быть задана!
+            if (dataRow == null) {
+                return true;
+            }
+
+            try {
+                // Заносим данные из контролов в DataRow
+                dataRow["well_name"] = CommonUtil.toDbStr(edtWellName.Text);
+                dataRow["well_name_eng"] = CommonUtil.toDbStr(edtWellName_eng.Text);
+                dataRow["uwi"] = CommonUtil.toDbStr(edtUWI.Text);
+                dataRow["rig_name"] = CommonUtil.toDbStr(edtRigName.Text);
+                dataRow["rig_name_eng"] = CommonUtil.toDbStr(edtRigName_eng.Text);
+                dataRow["agent_name"] = CommonUtil.toDbStr(cbAdmObject.Text);
+                dataRow["agent_s"] = CommonUtil.toLong(cbAdmObject.EditValue);
+                dataRow["class_s"] = CommonUtil.toId(cbClassS.EditValue);
+                dataRow["initial_class_s"] = CommonUtil.toLong(cbInitialClass.EditValue);
+                dataRow["contractor_s"] = CommonUtil.toLong(cbContractor.EditValue);
+                dataRow["crstatus_s"] = CommonUtil.toId(cbCrStatusS.EditValue);
+                dataRow["proj_td"] = CommonUtil.toDbDouble(CommonUtil.correctDecimalValue(edtProj.Text));
+                dataRow["drillers_td"] = CommonUtil.toDbDouble(CommonUtil.correctDecimalValue(edtDrillers.Text));
+                dataRow["elevation"] = CommonUtil.toDbDouble(CommonUtil.correctDecimalValue(edtElevation.Text));
+                dataRow["spud_date"] = (edtSpudDate.EditValue != null) ? CommonUtil.toDbDate(edtSpudDate.DateTime) : DBNull.Value;
+                dataRow["fin_drill"] = (edtFinDrillDate.EditValue != null) ? CommonUtil.toDbDate(edtFinDrillDate.DateTime) : DBNull.Value;
+                dataRow["comp_date"] = (edtCompDate.EditValue != null) ? CommonUtil.toDbDate(edtCompDate.DateTime) : DBNull.Value;
+                dataRow["oninject"] = (oninject.EditValue != null) ? CommonUtil.toDbDate(oninject.DateTime) : DBNull.Value;
+                dataRow["onprod"] = (edtOnprodDate.EditValue != null) ? CommonUtil.toDbDate(edtOnprodDate.DateTime) : DBNull.Value;
+                dataRow["is_horizontal"] = cbGoriz.SelectedIndex == 0 ? CommonUtil.toDbDouble(1) : DBNull.Value;
+                dataRow["order_number"] = CommonUtil.toLong(edtOrderNumber.Text);
+                dataRow["well_first_s"] = CommonUtil.toLong(cbWellFirstEditCtrl.EditValue);
+                dataRow["elevation_kb"] = CommonUtil.toDbDouble(CommonUtil.correctDecimalValue(altitude.Text));
+                dataRow["elevation_ref"] = CommonUtil.toLong(altitudeType.EditValue);
+                // Отправляем данные на сервер для сохранения в БД
+                PXPClientCommonUtil.getDictService().wellUpdate(
+                        CommonUtil.toId(dataRow["well_s"]),
+                        CommonUtil.toId(dataRow["agent_s"]),
+                        edtUWI.Text,
+                        edtWellName.Text,
+                        edtWellName_eng.Text,
+                        edtRigName.Text,
+                        edtRigName_eng.Text,
+                        CommonUtil.toDoubleNull(dataRow["drillers_td"]),
+                        CommonUtil.toDoubleNull(dataRow["elevation"]),
+                        CommonUtil.toTick(dataRow["spud_date"]),
+                        CommonUtil.toTick(dataRow["fin_drill"]),
+                        CommonUtil.toTick(dataRow["comp_date"]),
+                        CommonUtil.toTick(dataRow["onprod"]),
+                        CommonUtil.toLong(dataRow["dome_s"]),
+                        CommonUtil.toDoubleNull(dataRow["proj_td"]),
+                        CommonUtil.toLong(dataRow["initial_class_s"]),
+                        CommonUtil.toLong(dataRow["contractor_s"]),
+                        CommonUtil.toLong(dataRow["is_horizontal"]),
+                        CommonUtil.toTick(dataRow["oninject"]),
+                        CommonUtil.toId(dataRow["order_number"]),
+                        CommonUtil.toLong(dataRow["well_first_s"]),
+                        CommonUtil.toDoubleNull(dataRow["elevation_kb"]),
+                        CommonUtil.toLong(dataRow["elevation_ref"])
+                    );
+                return true; // Данные корректны
+            } catch (Exception ex) {
+                ShellGateway.commonShowError(
+                    ShellGateway.getShellResourcesStringLang(FwConstants.SHELL_RESOURCE_STR_ERROR_SAVE_DATA),
+                    ex);
+                return false; // Ошибка
+            }
+        }
+
+
+
+  public void wellUpdate(
+                    long wellId, 
+                    long admObjectId, 
+                    string uwi, 
+                    string wellName, 
+                    string wellNameEng, 
+                    string rigName, 
+                    string rigNameEng, 
+                    [System.Xml.Serialization.XmlElementAttribute(IsNullable=true)] System.Nullable<double> drillersTd, 
+                    [System.Xml.Serialization.XmlElementAttribute(IsNullable=true)] System.Nullable<double> elevation, 
+                    [System.Xml.Serialization.XmlElementAttribute(IsNullable=true)] System.Nullable<long> spudDateTick, 
+                    [System.Xml.Serialization.XmlElementAttribute(IsNullable=true)] System.Nullable<long> finDrillTick, 
+                    [System.Xml.Serialization.XmlElementAttribute(IsNullable=true)] System.Nullable<long> compDateTick, 
+                    [System.Xml.Serialization.XmlElementAttribute(IsNullable=true)] System.Nullable<long> onProdTick, 
+                    [System.Xml.Serialization.XmlElementAttribute(IsNullable=true)] System.Nullable<long> domeId, 
+                    [System.Xml.Serialization.XmlElementAttribute(IsNullable=true)] System.Nullable<double> projtd, 
+                    [System.Xml.Serialization.XmlElementAttribute(IsNullable=true)] System.Nullable<long> initialClassId, 
+                    [System.Xml.Serialization.XmlElementAttribute(IsNullable=true)] System.Nullable<long> contractorId, 
+                    [System.Xml.Serialization.XmlElementAttribute(IsNullable=true)] System.Nullable<long> isHoriz, 
+                    [System.Xml.Serialization.XmlElementAttribute(IsNullable=true)] System.Nullable<long> onInjectTick,
+                    long orderNumber,
+                    long wellFirstId,
+                    [System.Xml.Serialization.XmlElementAttribute(IsNullable = true)] System.Nullable<double> elevationKb,
+                    [System.Xml.Serialization.XmlElementAttribute(IsNullable = true)] System.Nullable<long> elevationRef) {
+            this.Invoke("wellUpdate", new object[] {
+                        wellId,
+                        admObjectId,
+                        uwi,
+                        wellName,
+                        wellNameEng,
+                        rigName,
+                        rigNameEng,
+                        drillersTd,
+                        elevation,
+                        spudDateTick,
+                        finDrillTick,
+                        compDateTick,
+                        onProdTick,
+                        domeId,
+                        projtd,
+                        initialClassId,
+                        contractorId,
+                        isHoriz,
+                        onInjectTick,
+                        orderNumber,
+                        wellFirstId,
+                        elevationKb,
+                        elevationRef});
+        }
+        
+
+
+25-05-20 13:42:34,995 [119] DEBUG Common.CommonUtil - directory C:\Windows\TEMP\\148d888b-deb4-47e2-9db4-795fc9e6f1bd\ create... successfully.
+2025-05-20 13:42:34,995 [119] DEBUG Common.CommonUtil - check directory C:\Windows\TEMP\\148d888b-deb4-47e2-9db4-795fc9e6f1bd\\
+2025-05-20 13:42:34,995 [119] DEBUG Common.CommonUtil - create directories... successfully
+2025-05-20 13:42:40,912 [125] ERROR Common.CommonExceptionSQL - sql error: ORA-06550: line 1, column 7:
+PLS-00306: wrong number or types of arguments in call to 'WELLUPDATE'
+ORA-06550: line 1, column 7:
+PL/SQL: Statement ignored
+
+query: 
+pxp.pxp_pkg.wellUpdate
+query params: 
+	p0: well_s_ [Number] = 25443651207,
+	p1: admObject_s_ [Number] = 25473639907,
+	p2: uwi_ [VarChar] = 06450000200,
+	p3: wellName_ [VarChar] = 2,
+	p4: wellName_eng_ [VarChar] = 2,
+	p5: rigName_ [VarChar] = ,
+	p6: rigName_eng_ [VarChar] = ,
+	p7: drillersTd_ [Double] = 4557,5,
+	p8: elevation_ [Double] = 112,49,
+	p9: spudDate_ [DateTime] = 09.04.2012 0:00:00,
+	p10: finDrill_ [DateTime] = 07.01.2013 0:00:00,
+	p11: compDate_ [DateTime] = 01.02.2013 0:00:00,
+	p12: OnProd_ [VarChar] = ,
+	p13: dome_s_ [Number] = ,
+	p14: proj_td_ [Number] = ,
+	p15: initial_class_s_ [Number] = 3543891,
+	p16: contractor_s_ [Number] = ,
+	p17: is_horizontal_ [Number] = ,
+	p18: oninject_ [VarChar] = ,
+	p19: order_number_ [Number] = 2,
+	p20: well_first_s_ [VarChar] = ,
+	p21: elevation_kb_ [Number] = 213,
+	p22: elevation_ref_ [Number] = 
+
+
+
+2025-05-20 13:42:40,912 [125] ERROR DBHelpers.DictHelper - ORA-06550: line 1, column 7:
+PLS-00306: wrong number or types of arguments in call to 'WELLUPDATE'
+ORA-06550: line 1, column 7:
+PL/SQL: Statement ignored
+
+Sibir.Framework.Common.CommonExceptionSQL: ORA-06550: line 1, column 7:
+PLS-00306: wrong number or types of arguments in call to 'WELLUPDATE'
+ORA-06550: line 1, column 7:
+PL/SQL: Statement ignored
+
+   at Sibir.Framework.Server.Common.Dbc.executeProcedure(String procName, OracleParameterCollection parameters) in C:\work\pxp\WSR.Framework\WSR.Framework.Server\Sibir.Framework.Sever.Common\Dbc.cs:line 811
+   at sibir.pxp.server.db.DBHelpers.DictHelper.wellUpdate(SessionBean bean, Int64 wellId, Int64 admObjectId, String uwi, String wellName, String wellNameEng, String rigName, String rigNameEng, Nullable`1 drillersTd, Nullable`1 elevation, Nullable`1 spudDate, Nullable`1 finDrill, Nullable`1 compDate, Nullable`1 onProd, Nullable`1 domeId, Nullable`1 projtd, Nullable`1 initialClassId, Nullable`1 contractorId, Nullable`1 isHoriz, Nullable`1 onInject, Int64 orderNumber, Int64 wellFirstId, Nullable`1 elevationKb, Nullable`1 elevationRf) in C:\work\pxp\WSR_PROJ\WSR.Sibir\server\server.db\DBHelpers\DictHelper.cs:line 402
+2025-05-20 13:42:40,920 [125] DEBUG Common.Dbc - rollback
+2025-05-20 13:42:40,920 [125] ERROR Common.BaseWebService - Ошибка при изменении скважины: ORA-06550: line 1, column 7:
+PLS-00306: wrong number or types of arguments in call to 'WELLUPDATE'
+ORA-06550: line 1, column 7:
+PL/SQL: Statement ignored
+
+System.ApplicationException: Ошибка при изменении скважины: ORA-06550: line 1, column 7:
+PLS-00306: wrong number or types of arguments in call to 'WELLUPDATE'
+ORA-06550: line 1, column 7:
+PL/SQL: Statement ignored
+
+   at sibir.pxp.server.db.DBHelpers.DictHelper.wellUpdate(SessionBean bean, Int64 wellId, Int64 admObjectId, String uwi, String wellName, String wellNameEng, String rigName, String rigNameEng, Nullable`1 drillersTd, Nullable`1 elevation, Nullable`1 spudDate, Nullable`1 finDrill, Nullable`1 compDate, Nullable`1 onProd, Nullable`1 domeId, Nullable`1 projtd, Nullable`1 initialClassId, Nullable`1 contractorId, Nullable`1 isHoriz, Nullable`1 onInject, Int64 orderNumber, Int64 wellFirstId, Nullable`1 elevationKb, Nullable`1 elevationRf) in C:\work\pxp\WSR_PROJ\WSR.Sibir\server\server.db\DBHelpers\DictHelper.cs:line 409
+   at sibir.pxp.server.services.DictService.wellUpdate(Int64 wellId, Int64 admObjectId, String uwi, String wellName, String wellNameEng, String rigName, String rigNameEng, Nullable`1 drillersTd, Nullable`1 elevation, Nullable`1 spudDateTick, Nullable`1 finDrillTick, Nullable`1 compDateTick, Nullable`1 onProdTick, Nullable`1 domeId, Nullable`1 projtd, Nullable`1 initialClassId, Nullable`1 contractorId, Nullable`1 isHoriz, Nullable`1 onInjectTick, Int64 orderNumber, Int64 wellFirstId, Nullable`1 elevationKb, Nullable`1 elevationRf) in C:\work\pxp\WSR_PROJ\WSR.Sibir\server\server.services\DictService.asmx.cs:line 231
+
