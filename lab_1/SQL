@@ -1,287 +1,681 @@
- WELL_S           INTEGER                      NOT NULL,
-  NAME             VARCHAR2(30 BYTE)            NOT NULL,
-  UWI              VARCHAR2(100 BYTE)           NOT NULL,
-  RIG_NAME         VARCHAR2(100 BYTE),
-  FIELD_S          INTEGER                      NOT NULL,
-  AGENT_S          INTEGER,
-  DESCRIPTION      VARCHAR2(500 BYTE),
-  CLASS_S          INTEGER                      NOT NULL,
-  CRSTATUS_S       INTEGER                      NOT NULL,
-  DRILLERS_TD      NUMBER,
-  ELEVATION        NUMBER,
-  INITIAL_CLASS_S  INTEGER                      NOT NULL,
-  SPUD_DATE        DATE,
-  FIN_DRILL        DATE,
-  COMP_DATE        DATE,
-  ONPROD           DATE,
-  PLUGBACK_TD      NUMBER,
-  CONTRACTOR_S     INTEGER,
-  OWNER_USER_S     INTEGER                      NOT NULL,
-  LOADER_USER_S    INTEGER                      NOT NULL,
-  LOAD_DATE        DATE                         NOT NULL,
-  IS_HORIZONTAL    NUMBER(1),
-  NAME_ENG         VARCHAR2(100 BYTE)           NOT NULL,
-  RIG_NAME_ENG     VARCHAR2(100 BYTE),
-  DESCRIPTION_ENG  VARCHAR2(500 BYTE),
-  ONINJECT         DATE,
-  DOME_S           INTEGER,
-  PROJ_TD          NUMBER,
-  ORDER_NUMBER     NUMBER,
-  ELEVATION_KB     NUMBER,
-  ELEVATION_REF    NUMBER
+CREATE OR REPLACE package body PXP.pxp_pkg as
 
 
-public static void wellUpdate(
-            SessionBean bean, long wellId, long admObjectId, string uwi, string wellName, string wellNameEng,
-            string rigName, string rigNameEng, double? drillersTd, double? elevation, DateTime? spudDate,
-            DateTime? finDrill,
-            DateTime? compDate, DateTime? onProd, long? domeId, double? projtd,
-            long? initialClassId, long? contractorId, long? isHoriz, DateTime? onInject, long orderNumber, long wellFirstId, double? elevationKb, long? elevationRf)
-        {
-            try{
-                var parameters = new OracleParameterCollection();
-                parameters.AddWithValue("well_s_", CommonUtil.toDbId(wellId));
-                parameters.AddWithValue("admObject_s_", CommonUtil.toDbId(admObjectId));
-                parameters.AddWithValue("uwi_", CommonUtil.toDbStr(uwi));
-                parameters.AddWithValue("wellName_", CommonUtil.toDbStr(wellName));
-                parameters.AddWithValue("wellName_eng_", CommonUtil.toDbStr(wellNameEng));
-                parameters.AddWithValue("rigName_", CommonUtil.toDbStr(rigName));
-                parameters.AddWithValue("rigName_eng_", CommonUtil.toDbStr(rigNameEng));
-                parameters.AddWithValue("drillersTd_", CommonUtil.toDbDouble(drillersTd));
-                parameters.AddWithValue("elevation_", CommonUtil.toDbDouble(elevation));
-                parameters.AddWithValue("spudDate_", CommonUtil.toDbDate(spudDate));
-                parameters.AddWithValue("finDrill_", CommonUtil.toDbDate(finDrill));
-                parameters.AddWithValue("compDate_", CommonUtil.toDbDate(compDate));
-                parameters.AddWithValue("OnProd_", CommonUtil.toDbDate(onProd));
-                parameters.AddWithValue("dome_s_", CommonUtil.toDbId(domeId)).OracleType = OracleType.Number;
-                parameters.AddWithValue("proj_td_", CommonUtil.toDbDouble(projtd)).OracleType = OracleType.Number;
-                parameters.AddWithValue("initial_class_s_", CommonUtil.toDbId(initialClassId)).OracleType = OracleType.Number;
-                parameters.AddWithValue("contractor_s_", CommonUtil.toDbId(contractorId)).OracleType = OracleType.Number;
-                parameters.AddWithValue("is_horizontal_", CommonUtil.toDbId(isHoriz)).OracleType = OracleType.Number;
-                parameters.AddWithValue("oninject_", CommonUtil.toDbDate(onInject));
-                parameters.AddWithValue("order_number_", CommonUtil.toDbId(orderNumber));
-                parameters.AddWithValue("well_first_s_", CommonUtil.toDbId(wellFirstId));
-                parameters.AddWithValue("elevation_kb_", CommonUtil.toDbDouble(elevationKb)).OracleType = OracleType.Number;
-                parameters.AddWithValue("elevation_ref_", CommonUtil.toDbId(elevationRf)).OracleType = OracleType.Number;
-                string functionName = string.Format("{0}.wellUpdate", ((PXPApplicationBean)bean.AppBean).PxpPackage);
-                bean.Ora.executeProcedure(functionName, parameters);
-            } catch(Exception ex){
-                log.Error(ex.Message, ex);
-                throw new ApplicationException("Ошибка при изменении скважины: " + ex.Message); 
-            }
-        }
+/*
+* @brief возвращает примечание из таблицы config для параметра и справочного значения
+* @param nameId параметр
+* @param valueDictId значение поля value_dict_s
+*/
+function getConfigDescrByDict(
+	nameId integer,
+	valueDictId integer
+) return varchar2 is
+	descr varchar2(500);
+begin
+	select description into descr
+	from config
+	where name_s = nameId and
+		  nvl(value_dict_s, -1) = nvl(valueDictId, -1);
+	return descr;
+exception
+	when no_data_found then
+		return null;
+end getConfigDescrByDict;
 
-      public void wellUpdate(long wellId, long admObjectId, string uwi, string wellName, string wellNameEng,
-            string rigName, string rigNameEng, double? drillersTd, double? elevation,
-            long? spudDateTick, long? finDrillTick,
-            long? compDateTick, long? onProdTick, 
-            long? domeId, double? projtd,
-            long? initialClassId, long? contractorId, long? isHoriz, long? onInjectTick, long orderNumber, long wellFirstId, double? elevationKb, long? elevationRf) {
-            try {
-                DateTime? spudDate = CommonUtil.toDate(spudDateTick);
-                DateTime? finDrill = CommonUtil.toDate(finDrillTick);
-                DateTime? compDate = CommonUtil.toDate(compDateTick);
-                DateTime? onProd = CommonUtil.toDate(onProdTick);
-                DateTime? onInject = CommonUtil.toDate(onInjectTick);
-                DictHelper.wellUpdate(getBean(), wellId, admObjectId, uwi, wellName, wellNameEng,
-                    rigName, rigNameEng, drillersTd, elevation, spudDate, finDrill,
-                    compDate, onProd, domeId, projtd, initialClassId, contractorId, isHoriz, onInject, orderNumber, wellFirstId, elevationKb, elevationRf);
-                getBean().Ora.commit();
-            } catch (Exception ex) {
-                getBean().Ora.rollback();
-                Log.Error(ex.Message, ex);
-                throw GenerateException("Ошибка при изменении скважины", ex);
-            }
-        }
+/*
+* @brief проверяет существует ли конфиг для параметра и справочного значения
+* @param nameId параметр
+* @param valueDictId значение поля value_dict_s
 
+*/
+function existsConfigByDict(
+	nameId integer,
+	valueDictId integer
+) return integer is
+	val integer;
+begin
+	select config_s into val
+	from config
+	where name_s = nameId and
+		  nvl(value_dict_s, -1) = nvl(valueDictId, -1);
+	return val;
+exception
+	when no_data_found then
+		return null;
+end existsConfigByDict;
 
+/*
+* @brief возвращает пласт по объекту разработки
+* @param reservoir_s_ объект разработки
+*/
+function getReservoirSet(
+	reservoir_s_ integer
+) return integer is
+	res integer;
+	maxrecords integer;
+begin
+	select count(reservoir_set_s) into res
+	from pxp.reservoir_set_link
+	where reservoir_s = reservoir_s_;
 
+	--если найдено только одно пласто пересечение то выдаем его ID
+	if (res = 1) then
+		select reservoir_set_s into res
+		from pxp.reservoir_set_link
+		where reservoir_s = reservoir_s_;
+	elsif (res = 0) then		
+		--raise_application_error(-20001, 'Пласт '||reservoir_s_||' не привязан ни к одному пластопересечению!');
+		return null;
+	else
+	begin
+		select reservoir_set_s into res
+		from(
+			select reservoir_set_s, 
+				(select count(reservoir_s) 
+			 	 from pxp.reservoir_set_link 
+				 where reservoir_set_s = rs.reservoir_set_s) rcount
+			from pxp.reservoir_set rs
+			where reservoir_set_s in(
+					select reservoir_set_s
+					from pxp.reservoir_set_link
+					where reservoir_s = reservoir_s_) 
+			      and type_s = LAYERS_FOR_THE_FUND_TYPE
+			group by reservoir_set_s
+			order by rcount)
+		where rcount = 1;
+		return res;
+	exception
+		when no_data_found then
+		begin
+			select reservoir_set_s into res
+			from(
+				select reservoir_set_s, 
+					(select count(reservoir_s) 
+				 	 from pxp.reservoir_set_link 
+					 where reservoir_set_s = rs.reservoir_set_s) rcount
+				from pxp.reservoir_set rs
+				where reservoir_set_s in(
+						select reservoir_set_s
+						from pxp.reservoir_set_link
+						where reservoir_s = reservoir_s_) 
+				      and type_s = LAYERS_FOR_THE_FUND_TYPE
+				group by reservoir_set_s
+				order by 2 desc)
+			where rownum = 1;
 
+			return res;
+		exception 
+			when others then
+				--raise_application_error(-20001, 'Не удалось найти пластопересечение для пласта '||reservoir_s_||' !');
+				return null;
+		end;
+	end;	
+	end if;
 
-
-
-
-  public override bool saveData() {
-            // Строка данных должны быть задана!
-            if (dataRow == null) {
-                return true;
-            }
-
-            try {
-                // Заносим данные из контролов в DataRow
-                dataRow["well_name"] = CommonUtil.toDbStr(edtWellName.Text);
-                dataRow["well_name_eng"] = CommonUtil.toDbStr(edtWellName_eng.Text);
-                dataRow["uwi"] = CommonUtil.toDbStr(edtUWI.Text);
-                dataRow["rig_name"] = CommonUtil.toDbStr(edtRigName.Text);
-                dataRow["rig_name_eng"] = CommonUtil.toDbStr(edtRigName_eng.Text);
-                dataRow["agent_name"] = CommonUtil.toDbStr(cbAdmObject.Text);
-                dataRow["agent_s"] = CommonUtil.toLong(cbAdmObject.EditValue);
-                dataRow["class_s"] = CommonUtil.toId(cbClassS.EditValue);
-                dataRow["initial_class_s"] = CommonUtil.toLong(cbInitialClass.EditValue);
-                dataRow["contractor_s"] = CommonUtil.toLong(cbContractor.EditValue);
-                dataRow["crstatus_s"] = CommonUtil.toId(cbCrStatusS.EditValue);
-                dataRow["proj_td"] = CommonUtil.toDbDouble(CommonUtil.correctDecimalValue(edtProj.Text));
-                dataRow["drillers_td"] = CommonUtil.toDbDouble(CommonUtil.correctDecimalValue(edtDrillers.Text));
-                dataRow["elevation"] = CommonUtil.toDbDouble(CommonUtil.correctDecimalValue(edtElevation.Text));
-                dataRow["spud_date"] = (edtSpudDate.EditValue != null) ? CommonUtil.toDbDate(edtSpudDate.DateTime) : DBNull.Value;
-                dataRow["fin_drill"] = (edtFinDrillDate.EditValue != null) ? CommonUtil.toDbDate(edtFinDrillDate.DateTime) : DBNull.Value;
-                dataRow["comp_date"] = (edtCompDate.EditValue != null) ? CommonUtil.toDbDate(edtCompDate.DateTime) : DBNull.Value;
-                dataRow["oninject"] = (oninject.EditValue != null) ? CommonUtil.toDbDate(oninject.DateTime) : DBNull.Value;
-                dataRow["onprod"] = (edtOnprodDate.EditValue != null) ? CommonUtil.toDbDate(edtOnprodDate.DateTime) : DBNull.Value;
-                dataRow["is_horizontal"] = cbGoriz.SelectedIndex == 0 ? CommonUtil.toDbDouble(1) : DBNull.Value;
-                dataRow["order_number"] = CommonUtil.toLong(edtOrderNumber.Text);
-                dataRow["well_first_s"] = CommonUtil.toLong(cbWellFirstEditCtrl.EditValue);
-                dataRow["elevation_kb"] = CommonUtil.toDbDouble(CommonUtil.correctDecimalValue(altitude.Text));
-                dataRow["elevation_ref"] = CommonUtil.toLong(altitudeType.EditValue);
-                // Отправляем данные на сервер для сохранения в БД
-                PXPClientCommonUtil.getDictService().wellUpdate(
-                        CommonUtil.toId(dataRow["well_s"]),
-                        CommonUtil.toId(dataRow["agent_s"]),
-                        edtUWI.Text,
-                        edtWellName.Text,
-                        edtWellName_eng.Text,
-                        edtRigName.Text,
-                        edtRigName_eng.Text,
-                        CommonUtil.toDoubleNull(dataRow["drillers_td"]),
-                        CommonUtil.toDoubleNull(dataRow["elevation"]),
-                        CommonUtil.toTick(dataRow["spud_date"]),
-                        CommonUtil.toTick(dataRow["fin_drill"]),
-                        CommonUtil.toTick(dataRow["comp_date"]),
-                        CommonUtil.toTick(dataRow["onprod"]),
-                        CommonUtil.toLong(dataRow["dome_s"]),
-                        CommonUtil.toDoubleNull(dataRow["proj_td"]),
-                        CommonUtil.toLong(dataRow["initial_class_s"]),
-                        CommonUtil.toLong(dataRow["contractor_s"]),
-                        CommonUtil.toLong(dataRow["is_horizontal"]),
-                        CommonUtil.toTick(dataRow["oninject"]),
-                        CommonUtil.toId(dataRow["order_number"]),
-                        CommonUtil.toLong(dataRow["well_first_s"]),
-                        CommonUtil.toDoubleNull(dataRow["elevation_kb"]),
-                        CommonUtil.toLong(dataRow["elevation_ref"])
-                    );
-                return true; // Данные корректны
-            } catch (Exception ex) {
-                ShellGateway.commonShowError(
-                    ShellGateway.getShellResourcesStringLang(FwConstants.SHELL_RESOURCE_STR_ERROR_SAVE_DATA),
-                    ex);
-                return false; // Ошибка
-            }
-        }
+	return res;
+end getReservoirSet;
 
 
+	/**
+	  * Создание месторождения
+	  */
+	function fieldCreate(
+				PARENT_S_	number,
+				ADM_OBJECT_S_ number,
+				NAME_		varchar2, 
+				NAME_ENG_	varchar2, 
+				IS_GROUP_	number,
+				DESCRIPTION_	varchar2,
+				DESCRIPTION_ENG_	varchar2
+	) return number is
+		field_s_	number;
+	begin
+		select pxp_seq.nextval into field_s_ from dual;
 
-  public void wellUpdate(
-                    long wellId, 
-                    long admObjectId, 
-                    string uwi, 
-                    string wellName, 
-                    string wellNameEng, 
-                    string rigName, 
-                    string rigNameEng, 
-                    [System.Xml.Serialization.XmlElementAttribute(IsNullable=true)] System.Nullable<double> drillersTd, 
-                    [System.Xml.Serialization.XmlElementAttribute(IsNullable=true)] System.Nullable<double> elevation, 
-                    [System.Xml.Serialization.XmlElementAttribute(IsNullable=true)] System.Nullable<long> spudDateTick, 
-                    [System.Xml.Serialization.XmlElementAttribute(IsNullable=true)] System.Nullable<long> finDrillTick, 
-                    [System.Xml.Serialization.XmlElementAttribute(IsNullable=true)] System.Nullable<long> compDateTick, 
-                    [System.Xml.Serialization.XmlElementAttribute(IsNullable=true)] System.Nullable<long> onProdTick, 
-                    [System.Xml.Serialization.XmlElementAttribute(IsNullable=true)] System.Nullable<long> domeId, 
-                    [System.Xml.Serialization.XmlElementAttribute(IsNullable=true)] System.Nullable<double> projtd, 
-                    [System.Xml.Serialization.XmlElementAttribute(IsNullable=true)] System.Nullable<long> initialClassId, 
-                    [System.Xml.Serialization.XmlElementAttribute(IsNullable=true)] System.Nullable<long> contractorId, 
-                    [System.Xml.Serialization.XmlElementAttribute(IsNullable=true)] System.Nullable<long> isHoriz, 
-                    [System.Xml.Serialization.XmlElementAttribute(IsNullable=true)] System.Nullable<long> onInjectTick,
-                    long orderNumber,
-                    long wellFirstId,
-                    [System.Xml.Serialization.XmlElementAttribute(IsNullable = true)] System.Nullable<double> elevationKb,
-                    [System.Xml.Serialization.XmlElementAttribute(IsNullable = true)] System.Nullable<long> elevationRef) {
-            this.Invoke("wellUpdate", new object[] {
-                        wellId,
-                        admObjectId,
-                        uwi,
-                        wellName,
-                        wellNameEng,
-                        rigName,
-                        rigNameEng,
-                        drillersTd,
-                        elevation,
-                        spudDateTick,
-                        finDrillTick,
-                        compDateTick,
-                        onProdTick,
-                        domeId,
-                        projtd,
-                        initialClassId,
-                        contractorId,
-                        isHoriz,
-                        onInjectTick,
-                        orderNumber,
-                        wellFirstId,
-                        elevationKb,
-                        elevationRef});
-        }
+		insert into field_table (
+			field_s, PARENT_S, ADM_OBJECT_S, NAME, NAME_ENG, IS_GROUP, DESCRIPTION, DESCRIPTION_ENG
+		) values (
+			field_s_, PARENT_S_, ADM_OBJECT_S_, NAME_, NAME_ENG_, IS_GROUP_, DESCRIPTION_, DESCRIPTION_ENG_
+		);
+
+		return field_s_;
+	end fieldCreate;
+
+    /**
+    * Редактирование месторождения
+    */
+    procedure fieldUpdate(	FIELD_S_	number,
+				PARENT_S_	number,
+				ADM_OBJECT_S_ number,
+				NAME_		varchar2, 
+				NAME_ENG_	varchar2, 
+				IS_GROUP_	number,
+				DESCRIPTION_	varchar2,
+				DESCRIPTION_ENG_	varchar2) is
+	begin
+		update field_table
+		set 
+			PARENT_S = PARENT_S_,
+			ADM_OBJECT_S = ADM_OBJECT_S_, 
+			NAME = NAME_, 
+			NAME_ENG = NAME_ENG_, 
+			IS_GROUP = IS_GROUP_,
+			DESCRIPTION=DESCRIPTION_,
+			DESCRIPTION_ENG=DESCRIPTION_ENG_
+		where
+			FIELD_S = FIELD_S_;
+	end fieldUpdate;
+
+    /**
+    * Удаление месторождения
+    */
+    procedure fieldDelete(
+    			FIELD_S_	number
+	) is
+	begin
+	    delete FIELD_TABLE where FIELD_S = FIELD_S_;
+	end fieldDelete;
+	
+	/**
+	  * Создание скважины
+	  */
+	function wellCreate(
+				field_s_ number, 
+				admObject_s_ number, 
+				class_s_ number,
+				crstatus_s_ number,
+				uwi_ varchar2,				
+				wellName_ varchar2,
+				wellName_eng_ varchar2,
+				rigName_ varchar2, 
+				rigName_eng_ varchar2, 
+				drillersTd_ number, 
+				elevation_ number, 
+				spudDate_ date, 
+				finDrill_ date, 
+				compDate_ date, 
+				OnProd_ date,				
+                                dome_s_ number,
+                                proj_td_ number,
+                                initial_class_s_ number,
+                                contractor_s_ number,
+                                is_horizontal_ number,
+                                oninject_ date,
+				order_number_ number,
+                well_first_s_ number
+                                
+	) return number is
+		well_s_	number;
+	begin
+		select pxp_seq.nextval into well_s_ from dual;
+
+		insert into well_table (
+			well_s, field_s, agent_s, class_s, crstatus_s, uwi, NAME, NAME_ENG, 
+                        RIG_NAME, RIG_NAME_ENG, DRILLERS_TD, ELEVATION, SPUD_DATE, FIN_DRILL, COMP_DATE, ONPROD,
+                        dome_s, proj_td, initial_class_s, contractor_s, is_horizontal, oninject, order_number
+		) values (
+			well_s_, field_s_, admObject_s_, class_s_, crstatus_s_, uwi_, wellName_, wellName_eng_, 
+                        rigName_, rigName_eng_, drillersTd_, elevation_, spudDate_, finDrill_, compDate_, OnProd_,
+                        dome_s_, proj_td_, initial_class_s_, contractor_s_, is_horizontal_, oninject_, order_number_
+		);
         
+        if (well_first_s_ > 0) then
+            insert into pxp.well_bore_link(well_bore_link_s, well_s, well_bore_s)
+            values(pxp_seq.nextVal, well_first_s_, well_s_);
+        end if;
+
+		return well_s_;
+	end wellCreate;
+
+    /**
+    * Редактирование скважины
+    */
+    procedure wellUpdate(
+				well_s_ number,
+				admObject_s_ number, 
+				uwi_ varchar2,				
+				wellName_ varchar2,
+				wellName_eng_ varchar2,
+				rigName_ varchar2, 
+				rigName_eng_ varchar2,
+				drillersTd_ number, 
+				elevation_ number, 
+				spudDate_ date, 
+				finDrill_ date, 
+				compDate_ date, 
+				OnProd_ date,
+                                dome_s_ number,
+                                proj_td_ number,
+                                initial_class_s_ number,
+                                contractor_s_ number,
+                                is_horizontal_ number,
+                                oninject_       date,
+				order_number_  number,
+                well_first_s_  number
+                --elevation_kb_  number,
+                --elevation_ref_ number
+	) is
+	begin
+		update well_table	
+		set 
+			agent_s = admObject_s_, 
+			uwi = uwi_,
+			NAME = wellName_, 
+			NAME_ENG = wellName_eng_, 
+			RIG_NAME = rigName_, 
+			RIG_NAME_ENG = rigName_eng_, 
+			DRILLERS_TD = drillersTd_, 
+			ELEVATION = elevation_, 
+			SPUD_DATE = spudDate_, 
+			FIN_DRILL = finDrill_, 
+			COMP_DATE = compDate_, 
+			ONPROD = OnProd_,
+                        dome_s = dome_s_,
+                        proj_td = proj_td_,
+                        initial_class_s = initial_class_s_,
+                        contractor_s = contractor_s_,
+                        is_horizontal = is_horizontal_,
+                        oninject = oninject_,
+			order_number = order_number_
+            --elevation_kb = elevation_kb_,
+           -- elevation_ref = elevation_ref_
+		where
+			WELL_S = well_s_;
+        
+        delete
+        from pxp.well_bore_link
+        where well_bore_s = well_s_;
+
+        if well_first_s_ > 0 then
+            insert into pxp.well_bore_link(well_bore_link_s, well_s, well_bore_s)
+            values(pxp_seq.nextVal, well_first_s_, well_s_);
+        end if;
+	end wellUpdate;
+    
+
+	/**
+	  * Создание показателя ТСРМ
+	  */
+	function tsrmParamCreate(
+		parent_s_			number,
+		measure_s_			number, 
+		name_				varchar2, 
+		have_value_			number, 
+		order_number_		number, 
+		column_name_		varchar2, 
+		agr_func_date_		varchar2, 
+		agr_func_object_	varchar2,
+		description_		varchar2
+	) return number is
+		tsrm_param_s_	number;
+	begin
+		select pxp_seq.nextval into tsrm_param_s_ from dual;
+
+		insert into tsrm_param
+		   (tsrm_param_s, parent_s, measure_s, name, have_value, order_number, column_name, agr_func_date, agr_func_object, description)
+		values
+		   (tsrm_param_s_, parent_s_, measure_s_, name_, have_value_, order_number_, column_name_, agr_func_date_, agr_func_object_, description_)
+		;
+
+		return tsrm_param_s_;
+	end tsrmParamCreate;
+
+    /**
+    * Редактирование показателя ТСРМ
+    */
+    procedure tsrmParamUpdate(
+		tsrm_param_s_		number,
+		parent_s_			number,
+		measure_s_			number, 
+		name_				varchar2, 
+		have_value_			number, 
+		order_number_		number, 
+		column_name_		varchar2, 
+		agr_func_date_		varchar2, 
+		agr_func_object_	varchar2,
+		description_		varchar2
+	) is
+	begin
+
+		update 
+			tsrm_param
+		set 
+			parent_s = parent_s_, 
+			measure_s = measure_s_, 
+			name = name_, 
+			have_value = have_value_, 
+			order_number = order_number_, 
+			column_name = column_name_, 
+			agr_func_date = agr_func_date_, 
+			agr_func_object = agr_func_object_,
+			description = description_
+		where
+			tsrm_param_s = tsrm_param_s_;
+
+	end tsrmParamUpdate;
+
+    /**
+    * Удаление месторождения
+    */
+    procedure tsrmParamDelete(
+		tsrm_param_s_		number
+	) is
+	begin
+
+	    --Удаляем детей
+	    delete tsrm_param 
+	    where tsrm_param_s in (
+		    select  tsrm_param_s 
+		    from tsrm_param 
+		    connect by prior tsrm_param_s = parent_s
+			start with tsrm_param_s = tsrm_param_s_
+		);
+
+	end tsrmParamDelete;
 
 
-25-05-20 13:42:34,995 [119] DEBUG Common.CommonUtil - directory C:\Windows\TEMP\\148d888b-deb4-47e2-9db4-795fc9e6f1bd\ create... successfully.
-2025-05-20 13:42:34,995 [119] DEBUG Common.CommonUtil - check directory C:\Windows\TEMP\\148d888b-deb4-47e2-9db4-795fc9e6f1bd\\
-2025-05-20 13:42:34,995 [119] DEBUG Common.CommonUtil - create directories... successfully
-2025-05-20 13:42:40,912 [125] ERROR Common.CommonExceptionSQL - sql error: ORA-06550: line 1, column 7:
-PLS-00306: wrong number or types of arguments in call to 'WELLUPDATE'
-ORA-06550: line 1, column 7:
-PL/SQL: Statement ignored
+	/**
+	  * Создание объекта разработки
+	  */
+	function reservoirCreate(
+				FIELD_S_	number,
+				NAME_		varchar2, 
+				NAME_ENG_		varchar2, 
+				STATUS_S_	number,
+				DESCRIPTION_	varchar2,
+				DESCRIPTION_ENG_	varchar2,
+				ORDER_NUMBER_		integer
+	) return number is
+		RESERVOIR_S_	number;
+	begin
+		select pxp_seq.nextval into RESERVOIR_S_ from dual;
+
+		insert into RESERVOIR_TABLE (
+			RESERVOIR_S, FIELD_S, NAME, NAME_ENG, STATUS_S, DESCRIPTION, DESCRIPTION_ENG, order_number
+		) values (
+			RESERVOIR_S_, FIELD_S_, NAME_, NAME_ENG_, STATUS_S_, DESCRIPTION_, DESCRIPTION_ENG_, ORDER_NUMBER_
+		);
+
+		return RESERVOIR_S_;
+	end reservoirCreate;
+
+    /**
+    * Редактирование объекта разработки
+    */
+    procedure reservoirUpdate(
+				RESERVOIR_S_	number,
+				FIELD_S_	number,
+				NAME_		varchar2, 
+				NAME_ENG_	varchar2, 
+				STATUS_S_	number,
+				DESCRIPTION_	varchar2,
+				DESCRIPTION_ENG_	varchar2,
+				ORDER_NUMBER_		integer
+	) is
+	begin
+
+		update RESERVOIR_TABLE
+		set 
+			FIELD_S = FIELD_S_, 
+			NAME = NAME_, 
+			NAME_ENG = NAME_ENG_, 
+			STATUS_S = STATUS_S_,
+			DESCRIPTION=DESCRIPTION_,
+			DESCRIPTION_ENG=DESCRIPTION_ENG_,
+			order_number = order_number_
+		where
+			RESERVOIR_S = RESERVOIR_S_;
+
+	end reservoirUpdate;
+
+    /**
+    * Удаление объекта разработки
+    */
+    procedure reservoirDelete(
+    				RESERVOIR_S_	number
+	) is
+	begin
+
+		delete RESERVOIR_TABLE where RESERVOIR_S = RESERVOIR_S_;
+	
+	end reservoirDelete;
+
+    /**
+    * Создание связи административной единицы с месторождением
+    */
+	function fieldAdmObjectLinkCreate(
+		adm_object_s_	number, 
+		field_s_		number
+	) return number is
+		field_adm_object_link_s_	number;
+		temp_number_			number;
+	begin 
+
+		begin
+			select field_adm_object_link_s 
+			into temp_number_ 
+			from field_adm_object_link 
+			where 
+				field_s = field_s_ 
+				and adm_object_s = adm_object_s_;
+		exception
+			when no_data_found then
+				temp_number_ := null;
+		end;	
+		
+		if (temp_number_ is null) then 
+			select pxp_seq.nextval into field_adm_object_link_s_ from dual;
+
+			insert into field_adm_object_link ( 
+			   field_adm_object_link_s, adm_object_s, field_s
+			) values (	   
+			   field_adm_object_link_s_, adm_object_s_, field_s_
+			);
+		end if;
+
+		return field_adm_object_link_s_;
+	end fieldAdmObjectLinkCreate;
+
+    /**
+    * Удаление связи административной единицы с месторождением
+    */
+    procedure fieldAdmObjectLinkDelete(
+		adm_object_s_	number, 
+		field_s_		number
+	) is
+	begin
+
+	    delete field_adm_object_link where adm_object_s = adm_object_s_ and field_s = field_s_;
+
+	end fieldAdmObjectLinkDelete;
+
+
+
+
+	/**
+	 * Получение файла карты
+	 */
+	function getMapFileBody(map_s_ integer) return BLOB is
+		body_ 		blob;
+		dir_name_ 	varchar2(500);
+		file_name_	map.file_name%type;
+	begin
+		select file_name into file_name_ from map where map_s = map_s_;
+		
+		select value_str into dir_name_ from config where name_s=CONFIG_PXP_BFILE_DIR;
+
+		execute immediate 'select pxp.lob_utils.file2blob('''||dir_name_||''' || ''/'' || '''||file_name_||''') from dual' into body_;
+		--body_ := lob_utils.file2blob(dir_name_ || '/' || file_name_);
+		
+		return body_;
+	end getMapFileBody;
+
+	function getMapFile(map_s_ integer) return varchar2 is
+		dir_name_ 	varchar2(500);
+		file_name_	map.file_name%type;
+	begin
+		select file_name into file_name_ from map where map_s = map_s_;
+		
+		select value_str into dir_name_ from config where name_s=CONFIG_PXP_BFILE_DIR;
+		
+		return dir_name_ || '/' || file_name_;
+	end getMapFile;
+	
+	/*	Возвращает Имя сущности по Id сущности, 
+	 *	если сущности нет в таблице entity то возвращается entity_s_ в виде строки.
+	 *  Работает только для сущностей в схеме PXP */
+	function getEntityName(
+		entity_s_ integer
+	) return string
+	is
+		entity_class_s_ integer;
+		name_			varchar2(300);
+	begin
+		select entity_class_s  into entity_class_s_ 
+		from pxp.entity
+		where
+			entity_s = entity_s_;		
+		
+		if entity_class_s_ = 660 /*Справичник*/ then
+			select name into name_ from pxp.dict where dict_s = entity_s_;
+		elsif entity_class_s_ = 653/*Скважина*/ then
+			select name into name_ from pxp.well where well_s = entity_s_;
+		elsif entity_class_s_ = 651/*Месторождение*/ then
+			select name into name_ from pxp.field where field_s = entity_s_;
+		elsif entity_class_s_ = 652/*Объект разработки*/	then
+			select name into name_ from pxp.reservoir where reservoir_s = entity_s_;
+		elsif entity_class_s_ = 657/*Административный объект*/	then
+			select name into name_ from pxp.adm_object where adm_object_s = entity_s_;
+		elsif entity_class_s_ = 376888322/*Параметры ТСРМ*/	then
+			select name into name_ from pxp.tsrm_param where tsrm_param_s = entity_s_;		
+		elsif entity_class_s_ = 299222223/*reservoir_set*/	then
+			select name into name_ from pxp.reservoir_set where reservoir_set_s = entity_s_;
+		else 
+			name_ := to_char(entity_s_);
+		end if;
+		
+		return name_;
+		
+	end getEntityName;
+	
+    function listContaint(
+		list_s_ in integer,
+		dict_s_ in integer
+    ) return number is
+	test number;
+    begin
+	select count(*) into test
+	from dict_list
+	where   list_s = list_s_ and
+		dict_s = dict_s_;
+
+	if (test > 0) then
+		return 1;
+	else
+		return null;
+	end if;		
+    end listContaint;
+
+/**
+	  * Создание кода соответствия OIS
+	  */
+	function oisDecodeCreate(
+				OIS_CODE_	varchar2,
+				SMD_CODE_S_	number, 
+				OIS_TABLE_S_	number,
+				OIS_SCHEMA_	varchar2,
+				SMD_TABLE_S_	number, 
+				ADM_OBJECT_S_	number,
+				DESCRIPTION_	varchar2
+	) return number is
+		OIS_DECODE_S_	number;
+	begin
+		select pxp_seq.nextval into OIS_DECODE_S_ from dual;
+
+		insert into OIS_DECODE (
+			OIS_DECODE_S, OIS_CODE, PXP_CODE_S, OIS_TABLE_S, OIS_SCHEMA, 
+			pxp_TABLE_S, ADM_OBJECT_S, DESCRIPTION
+		) values (
+			OIS_DECODE_S_, OIS_CODE_, SMD_CODE_S_, OIS_TABLE_S_, OIS_SCHEMA_, 
+			SMD_TABLE_S_, ADM_OBJECT_S_, DESCRIPTION_
+		);
+
+		return OIS_DECODE_S_;
+	end oisDecodeCreate;
+
+    /**
+    * Редактирование кода соответствия OIS
+    */
+    procedure oisDecodeUpdate(
+				OIS_DECODE_S_	number,
+				OIS_CODE_	varchar2,
+				SMD_CODE_S_	number, 
+				OIS_TABLE_S_	number,
+				OIS_SCHEMA_	varchar2,
+				SMD_TABLE_S_	number, 
+				ADM_OBJECT_S_	number,
+				DESCRIPTION_	varchar2
+	) is
+
+	begin
+
+		update OIS_DECODE
+		set 			 
+			OIS_CODE = OIS_CODE_, 
+			pxp_CODE_S = SMD_CODE_S_,
+			OIS_TABLE_S = OIS_TABLE_S_, 
+			OIS_SCHEMA = OIS_SCHEMA_, 
+			pxp_TABLE_S = SMD_TABLE_S_,
+			ADM_OBJECT_S=ADM_OBJECT_S_,
+			DESCRIPTION=DESCRIPTION_
+		where
+			OIS_DECODE_S = OIS_DECODE_S_;
+
+	end oisDecodeUpdate;
+
+    /**
+    * Удаление объекта разработки
+    */
+    procedure oisDecodeDelete(
+    				OIS_DECODE_S_	number
+	) is
+	begin
+
+	    delete OIS_DECODE where OIS_DECODE_S = OIS_DECODE_S_;
+
+	end oisDecodeDelete;
+	
+end pxp_pkg;
+/
+
+
+2025-05-21 11:46:27,392 [547] DEBUG Common.BaseWebService - get appbean... successfully
+2025-05-21 11:46:27,394 [547] ERROR Common.Dbc - ORA-04063: package body "PXP.PXP_PKG" has errors
+
+System.Data.OracleClient.OracleException (0x80131938): ORA-04063: package body "PXP.PXP_PKG" has errors
+
+   at System.Data.OracleClient.OracleConnection.CheckError(OciErrorHandle errorHandle, Int32 rc)
+   at System.Data.OracleClient.OracleDataReader.ReadInternal()
+   at System.Data.OracleClient.OracleDataReader.Read()
+   at System.Data.Common.DataAdapter.FillLoadDataRow(SchemaMapping mapping)
+   at System.Data.Common.DataAdapter.FillFromReader(DataSet dataset, DataTable datatable, String srcTable, DataReaderContainer dataReader, Int32 startRecord, Int32 maxRecords, DataColumn parentChapterColumn, Object parentChapterValue)
+   at System.Data.Common.DataAdapter.Fill(DataSet dataSet, String srcTable, IDataReader dataReader, Int32 startRecord, Int32 maxRecords)
+   at System.Data.Common.DbDataAdapter.FillInternal(DataSet dataset, DataTable[] datatables, Int32 startRecord, Int32 maxRecords, String srcTable, IDbCommand command, CommandBehavior behavior)
+   at System.Data.Common.DbDataAdapter.Fill(DataSet dataSet, Int32 startRecord, Int32 maxRecords, String srcTable, IDbCommand command, CommandBehavior behavior)
+   at System.Data.Common.DbDataAdapter.Fill(DataSet dataSet)
+   at Sibir.Framework.Server.Common.Dbc.fillDataSet(DataSet ds, String query, Hashtable queryParams) in C:\work\pxp\WSR.Framework\WSR.Framework.Server\Sibir.Framework.Sever.Common\Dbc.cs:line 414
+2025-05-21 11:46:27,394 [547] ERROR Common.CommonExceptionSQL - sql error: ORA-04063: package body "PXP.PXP_PKG" has errors
 
 query: 
-pxp.pxp_pkg.wellUpdate
+select map_s, name, file_name, pxp.pxp_pkg.getMapFileBody(map_s) BODY from pxp.map where adm_country_s = 30050 and adm_subject_s is null and lang_s = 40150
 query params: 
-	p0: well_s_ [Number] = 25443651207,
-	p1: admObject_s_ [Number] = 25473639907,
-	p2: uwi_ [VarChar] = 06450000200,
-	p3: wellName_ [VarChar] = 2,
-	p4: wellName_eng_ [VarChar] = 2,
-	p5: rigName_ [VarChar] = ,
-	p6: rigName_eng_ [VarChar] = ,
-	p7: drillersTd_ [Double] = 4557,5,
-	p8: elevation_ [Double] = 112,49,
-	p9: spudDate_ [DateTime] = 09.04.2012 0:00:00,
-	p10: finDrill_ [DateTime] = 07.01.2013 0:00:00,
-	p11: compDate_ [DateTime] = 01.02.2013 0:00:00,
-	p12: OnProd_ [VarChar] = ,
-	p13: dome_s_ [Number] = ,
-	p14: proj_td_ [Number] = ,
-	p15: initial_class_s_ [Number] = 3543891,
-	p16: contractor_s_ [Number] = ,
-	p17: is_horizontal_ [Number] = ,
-	p18: oninject_ [VarChar] = ,
-	p19: order_number_ [Number] = 2,
-	p20: well_first_s_ [VarChar] = ,
-	p21: elevation_kb_ [Number] = 213,
-	p22: elevation_ref_ [Number] = 
 
 
+2025-05-21 11:46:27,394 [547] ERROR Common.BaseWebService - ORA-04063: package body "PXP.PXP_PKG" has errors
 
-2025-05-20 13:42:40,912 [125] ERROR DBHelpers.DictHelper - ORA-06550: line 1, column 7:
-PLS-00306: wrong number or types of arguments in call to 'WELLUPDATE'
-ORA-06550: line 1, column 7:
-PL/SQL: Statement ignored
+Sibir.Framework.Common.CommonExceptionSQL: ORA-04063: package body "PXP.PXP_PKG" has errors
 
-Sibir.Framework.Common.CommonExceptionSQL: ORA-06550: line 1, column 7:
-PLS-00306: wrong number or types of arguments in call to 'WELLUPDATE'
-ORA-06550: line 1, column 7:
-PL/SQL: Statement ignored
-
-   at Sibir.Framework.Server.Common.Dbc.executeProcedure(String procName, OracleParameterCollection parameters) in C:\work\pxp\WSR.Framework\WSR.Framework.Server\Sibir.Framework.Sever.Common\Dbc.cs:line 811
-   at sibir.pxp.server.db.DBHelpers.DictHelper.wellUpdate(SessionBean bean, Int64 wellId, Int64 admObjectId, String uwi, String wellName, String wellNameEng, String rigName, String rigNameEng, Nullable`1 drillersTd, Nullable`1 elevation, Nullable`1 spudDate, Nullable`1 finDrill, Nullable`1 compDate, Nullable`1 onProd, Nullable`1 domeId, Nullable`1 projtd, Nullable`1 initialClassId, Nullable`1 contractorId, Nullable`1 isHoriz, Nullable`1 onInject, Int64 orderNumber, Int64 wellFirstId, Nullable`1 elevationKb, Nullable`1 elevationRf) in C:\work\pxp\WSR_PROJ\WSR.Sibir\server\server.db\DBHelpers\DictHelper.cs:line 402
-2025-05-20 13:42:40,920 [125] DEBUG Common.Dbc - rollback
-2025-05-20 13:42:40,920 [125] ERROR Common.BaseWebService - Ошибка при изменении скважины: ORA-06550: line 1, column 7:
-PLS-00306: wrong number or types of arguments in call to 'WELLUPDATE'
-ORA-06550: line 1, column 7:
-PL/SQL: Statement ignored
-
-System.ApplicationException: Ошибка при изменении скважины: ORA-06550: line 1, column 7:
-PLS-00306: wrong number or types of arguments in call to 'WELLUPDATE'
-ORA-06550: line 1, column 7:
-PL/SQL: Statement ignored
-
-   at sibir.pxp.server.db.DBHelpers.DictHelper.wellUpdate(SessionBean bean, Int64 wellId, Int64 admObjectId, String uwi, String wellName, String wellNameEng, String rigName, String rigNameEng, Nullable`1 drillersTd, Nullable`1 elevation, Nullable`1 spudDate, Nullable`1 finDrill, Nullable`1 compDate, Nullable`1 onProd, Nullable`1 domeId, Nullable`1 projtd, Nullable`1 initialClassId, Nullable`1 contractorId, Nullable`1 isHoriz, Nullable`1 onInject, Int64 orderNumber, Int64 wellFirstId, Nullable`1 elevationKb, Nullable`1 elevationRf) in C:\work\pxp\WSR_PROJ\WSR.Sibir\server\server.db\DBHelpers\DictHelper.cs:line 409
-   at sibir.pxp.server.services.DictService.wellUpdate(Int64 wellId, Int64 admObjectId, String uwi, String wellName, String wellNameEng, String rigName, String rigNameEng, Nullable`1 drillersTd, Nullable`1 elevation, Nullable`1 spudDateTick, Nullable`1 finDrillTick, Nullable`1 compDateTick, Nullable`1 onProdTick, Nullable`1 domeId, Nullable`1 projtd, Nullable`1 initialClassId, Nullable`1 contractorId, Nullable`1 isHoriz, Nullable`1 onInjectTick, Int64 orderNumber, Int64 wellFirstId, Nullable`1 elevationKb, Nullable`1 elevationRf) in C:\work\pxp\WSR_PROJ\WSR.Sibir\server\server.services\DictService.asmx.cs:line 231
-
+   at Sibir.Framework.Server.Common.Dbc.fillDataSet(DataSet ds, String query, Hashtable queryParams) in C:\work\pxp\WSR.Framework\WSR.Framework.Server\Sibir.Framework.Sever.Common\Dbc.cs:line 417
+   at sibir.pxp.server.db.DBHelpers.PassportHelper.mapGet(SessionBean bean, Int64 admCountryId, Int64 admSubjectId, Int64 admObjectId, Int64 langId) in C:\work\pxp\WSR_PROJ\WSR.Sibir\server\server.db\DBHelpers\PassportHelper.cs:line 1038
+   at sibir.pxp.server.services.PassportService.mapGet(Int64 admCountryId, Int64 admSubjectId, Int64 admObjectId, Int64 langId) in C:\work\pxp\WSR_PROJ\WSR.Sibir\server\server.services\PassportService.asmx.cs:line 529
+2025-05-21 11:46:27,818 [516] DEBUG Common.Dbc - commit
