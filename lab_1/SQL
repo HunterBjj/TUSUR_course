@@ -1,3 +1,14 @@
+//var deltaAngle = angle2 - angle1;
+                        //var deltaAzim = azimuth2 - azimuth1;
+                        //x = Math.Sqrt(Math.Pow(deltaAngle, 2) + Math.Pow(deltaAzim, 2) * Math.Pow(Math.Sin(CommonUtil.toRadians(angle1 - deltaAngle / 2)), 2));
+                        //double x1 = Math.Sqrt(Math.Pow(Math.Sin((angle2 - angle1) / 20), 2) + Math.Pow(Math.Sin((azimuth2 - azimuth1) / 20), 2) * Math.Pow((angle2 - angle1) / 2,2));
+                        //double x2 = Math.Sqrt(Math.Pow(Math.Sin((radAngle2 - radAngle1) / 20), 2) + Math.Pow(Math.Sin((radAzimuth2 - radAzimuth1) / 20), 2) * Math.Pow((radAngle2 - radAngle1) / 2,2));
+                        //double arcsin1 = Math.Atan(x1 / Math.Sqrt(-Math.Pow(x1, 2) + 1));
+                        //double arcsin2 = Math.Atan(x2 / Math.Sqrt(-Math.Pow(x2, 2) + 1));
+                        //arcsin1 = CommonUtil.toDegree(arcsin1);
+                        //arcsin2 = CommonUtil.toDegree(arcsin2);
+
+
 подпрограмма или курсор ' строка ' объявлены в спецификации пакета и должны быть определены в теле пакета
 
 CREATE OR REPLACE package body PXP.pxp_pkg as
