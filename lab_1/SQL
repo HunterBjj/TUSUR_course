@@ -1,3 +1,5 @@
+   double x = Math.Acos(Math.Cos(radAngle2 - radAngle1) - Math.Sin(radAngle1) * Math.Sin(radAngle2) * (1 - Math.Cos(radAzimuth2 - radAzimuth1)));//=ACOS(COS(Inc2 - Inc1)-SIN(Inc1)*SIN(Inc2)*(1-COS(Azim2-Azim1)))
+                        x = CommonUtil.toDegree(x);
 //var deltaAngle = angle2 - angle1;
                         //var deltaAzim = azimuth2 - azimuth1;
                         //x = Math.Sqrt(Math.Pow(deltaAngle, 2) + Math.Pow(deltaAzim, 2) * Math.Pow(Math.Sin(CommonUtil.toRadians(angle1 - deltaAngle / 2)), 2));
