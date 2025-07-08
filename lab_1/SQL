@@ -1,4 +1,42 @@
-   double x = Math.Acos(Math.Cos(radAngle2 - radAngle1) - Math.Sin(radAngle1) * Math.Sin(radAngle2) * (1 - Math.Cos(radAzimuth2 - radAzimuth1)));//=ACOS(COS(Inc2 - Inc1)-SIN(Inc1)*SIN(Inc2)*(1-COS(Azim2-Azim1)))
+  for (int i = 1; i < table.Rows.Count; i++) {
+
+                        if(ELEVATIONREF == true && checkNextColumn == true) {
+                            i++;
+                            checkNextColumn = false;
+                        }
+
+                        DataRow rows1 = table.Rows[i - 1];
+                        DataRow rows2 = table.Rows[i];
+
+                        double angle1 = CommonUtil.toDouble(rows1["DEVIATION_ANGLE"]);
+                        double azimuth1 = CommonUtil.toDouble(rows1["AZIMUTH"]);
+                        double angle2 = CommonUtil.toDouble(rows2["DEVIATION_ANGLE"]);
+                        double azimuth2 = CommonUtil.toDouble(rows2["AZIMUTH"]);
+                        var radAngle1 = CommonUtil.toRadians(angle1);
+                        var radAngle2 = CommonUtil.toRadians(angle2);
+                        var radAzimuth1 = CommonUtil.toRadians(azimuth1);
+                        var radAzimuth2 = CommonUtil.toRadians(azimuth2);
+                        double x = Math.Acos(Math.Cos(radAngle2 - radAngle1) - Math.Sin(radAngle1) * Math.Sin(radAngle2) * (1 - Math.Cos(radAzimuth2 - radAzimuth1))); //=ACOS(COS(Inc2 - Inc1)-SIN(Inc1)*SIN(Inc2)*(1-COS(Azim2-Azim1)))
+                        x = CommonUtil.toDegree(x);
+                        //var deltaAngle = angle2 - angle1;
+                        //var deltaAzim = azimuth2 - azimuth1;
+                        //x = Math.Sqrt(Math.Pow(deltaAngle, 2) + Math.Pow(deltaAzim, 2) * Math.Pow(Math.Sin(CommonUtil.toRadians(angle1 - deltaAngle / 2)), 2));
+                        //double x1 = Math.Sqrt(Math.Pow(Math.Sin((angle2 - angle1) / 20), 2) + Math.Pow(Math.Sin((azimuth2 - azimuth1) / 20), 2) * Math.Pow((angle2 - angle1) / 2,2));
+                        //double x2 = Math.Sqrt(Math.Pow(Math.Sin((radAngle2 - radAngle1) / 20), 2) + Math.Pow(Math.Sin((radAzimuth2 - radAzimuth1) / 20), 2) * Math.Pow((radAngle2 - radAngle1) / 2,2));
+                        //double arcsin1 = Math.Atan(x1 / Math.Sqrt(-Math.Pow(x1, 2) + 1));
+                        //double arcsin2 = Math.Atan(x2 / Math.Sqrt(-Math.Pow(x2, 2) + 1));
+                        //arcsin1 = CommonUtil.toDegree(arcsin1);
+                        //arcsin2 = CommonUtil.toDegree(arcsin2);
+                        rows2["CURVING"] = x;
+                    }
+                    gridControl1.DataSource = table;
+                    //    DefExportFileName =
+                    //string.Format(Resources.ExportToExcel_FileName_F, PXPClientCommonUtil.getProjResStrByLang(PXPConstants.PROJ_RES_STR_DIR_SURVEY),
+                    //            ((GEONavigationCtrl)NavigationControl).getCurWell().Title,
+                    //            ((GEONavigationCtrl)NavigationControl).getCurField().Title);
+                }
+
+double x = Math.Acos(Math.Cos(radAngle2 - radAngle1) - Math.Sin(radAngle1) * Math.Sin(radAngle2) * (1 - Math.Cos(radAzimuth2 - radAzimuth1)));//=ACOS(COS(Inc2 - Inc1)-SIN(Inc1)*SIN(Inc2)*(1-COS(Azim2-Azim1)))
                         x = CommonUtil.toDegree(x);
 //var deltaAngle = angle2 - angle1;
                         //var deltaAzim = azimuth2 - azimuth1;
