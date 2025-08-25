@@ -1,4 +1,53 @@
 select
+    well_name,
+    well_s,
+    field_s,
+    reservoir_s,
+    reservoir_name,
+    type_s,
+    x,
+    y,
+    type_name,
+    well_node_s,
+    field_name,
+    horiz_length,
+    horiz_angle,
+    description,
+    type_gsk_s
+from (
+    select
+        w.name well_name,
+        w.well_s,
+        w.field_s,
+        wn.reservoir_s,
+        r.name reservoir_name,
+        wn.type_s,
+        round(wn.x, 8) x,
+        round(wn.y, 8) y,
+        d.name type_name,
+        wn.well_node_s,
+        f.name field_name,
+        wn.horiz_length, 
+        wn.horiz_angle, 
+        wn.description,
+        nvl((select name from {0}.dict where dict_s = wn.type_gsk_s), 'Не определено') as type_gsk_s,
+        row_number() over (
+            partition by wn.well_node_s, trunc(wn.date_change, 'mi') 
+            order by wn.date_change desc
+        ) as rn
+    from 
+        {1}.well_node_hist wn 
+        join {0}.well w on w.well_s = :wellId
+        join {0}.dict d on d.dict_s = wn.type_s 
+        left join {0}.reservoir r on wn.reservoir_s = r.reservoir_s
+        join {0}.field f on f.field_s = w.field_s
+    where
+        wn.well_s = :wellId 
+        and trunc(wn.date_change, 'mi') = trunc(to_date(:dateChange, 'dd.mm.yyyy hh24:mi:ss'), 'mi')
+) 
+where rn = 1
+
+select
                     distinct
 					w.name well_name,
                     w.well_s,
