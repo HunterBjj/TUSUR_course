@@ -1,75 +1,48 @@
-select
-    well_name,
-    well_s,
-    field_s,
-    reservoir_s,
-    reservoir_name,
-    type_s,
-    x,
-    y,
-    type_name,
-    well_node_s,
-    field_name,
-    horiz_length,
-    horiz_angle,
-    description,
-    type_gsk_s
-from (
-    select
-        w.name well_name,
-        w.well_s,
-        w.field_s,
-        wn.reservoir_s,
-        r.name reservoir_name,
-        wn.type_s,
-        round(wn.x, 8) x,
-        round(wn.y, 8) y,
-        d.name type_name,
-        wn.well_node_s,
-        f.name field_name,
-        wn.horiz_length, 
-        wn.horiz_angle, 
-        wn.description,
-        nvl((select name from {0}.dict where dict_s = wn.type_gsk_s), 'Не определено') as type_gsk_s,
-        row_number() over (
-            partition by wn.well_node_s, trunc(wn.date_change, 'mi') 
-            order by wn.date_change desc
-        ) as rn
-    from 
-        {1}.well_node_hist wn 
-        join {0}.well w on w.well_s = :wellId
-        join {0}.dict d on d.dict_s = wn.type_s 
-        left join {0}.reservoir r on wn.reservoir_s = r.reservoir_s
-        join {0}.field f on f.field_s = w.field_s
-    where
-        wn.well_s = :wellId 
-        and trunc(wn.date_change, 'mi') = trunc(to_date(:dateChange, 'dd.mm.yyyy hh24:mi:ss'), 'mi')
-) 
-where rn = 1
+1. SELECT fullname FROM clients WHERE bdate = TRUNC(sysdate, 'dd');
 
-select
-                    distinct
-					w.name well_name,
-                    w.well_s,
-                    w.field_s,
-                    wn.reservoir_s,
-                    r.name reservoir_name,
-                    wn.type_s,
-					round(wn.x, 8) x,
-					round(wn.y, 8) y,
-					d.name type_name,
-                    wn.well_node_s,
-                    f.name field_name,
-                    wn.horiz_length, 
-                    wn.horiz_angle, 
-                    wn.description,
-                    nvl((select name from {0}.dict where dict_s = wn.type_gsk_s), 'Не определено') as type_gsk_s
-				from 
-					{1}.well_node_hist wn 
-					join {0}.well w on w.well_s = :wellId
-					join {0}.dict d on d.dict_s = wn.type_s 
-                    left join {0}.reservoir r on wn.reservoir_s = r.reservoir_s
-                    join {0}.field f on f.field_s = w.field_s
-				where
-					wn.well_s = :wellId 
-                    and trunc(wn.date_change, 'mi') = trunc(to_date(:dateChange, 'dd.mm.yyyy hh24:mi:ss'), 'mi')
+2. SELECT COUNT(*) FROM clients WHERE bdate IS NULL;
+
+3. SELECT SUM(CASE WHEN bdate IS NULL THEN 1 ELSE 0) FROM clients
+
+4. SELECT bdate FROM (SELECT ROW_NUMBER(PARTITION BY PCODE ORDER BY BDATE DESC) AS rn FROM clients) WHERE rn = 2;
+--Знаю как использовать с агрегирующими функциями, понимаю, что Вы хотите посмотреть как я ими владею, но тут не было условий, что без них нельзя.
+
+5. SELECT bdate FROM (SELECT ROW_NUMBER(PARTITION BY PCODE ORDER BY BDATE DESC) AS rn FROM clients) WHERE rn = 2;
+
+6. SELECT clnt.* FROM clients clnt WHERE NOT EXISTS(SELECT 1 FROM treat trt WHERE trt.pcode = clnt.pcode) 
+
+7. SELECT clnt.* FROM clients clnt WHERE EXISTS(SELECT 1 FROM treat trt WHERE trt.pcode = clnt.pcode) 
+
+8. SELECT treatcode, pcode, dcode, treatdate, amountcl, amountjp, histid FROM (SELECT *, RANK(PARTITION BY TREATCODE ORDER BY AMOUNTCL) AS rn FROM treat) WHERE rn = 1;
+
+10. SELECT full_name, bdate, MAX(cnt) FROM (SELECT full_name, bdate, ROW_NUMBER(PARTITION BY fullname, bdate) AS cnt from clients) WHERE cnt > 1 GROUP BY full_name, bdate;
+
+
+
+11. SELECT DOC.DNAME, SUM(TRT.AMOUNTCTL) AS СТОИМОСТЬ FROM DOCTOR doc JOIN TREAT TRT ON trt.dcode = doc.dcode group by doc.dname HAVING SUM(TRT.AMOUNTCTL > 10000);
+
+
+12. SELECT * FROM (SELECT *, ROW_NUMBER(PARTITION BY HISTID ORDER BY fdate desc) AS rn FROM clhistnum) WHERE rn = 1;
+
+13. SELECT doc.name, ABS((SELECT AVG(AMOUNTCL) 
+						  FROM TREAT WHERE EXTRACT(YEAR FROM TREAT_DATE) = 2019 
+						  AND dcode = trt.dcode) - 
+						(SELECT AVG(AMOUNTCL) FROM TREAT 
+						WHERE EXTRACT(YEAR FROM TREAT_DATE) = 2018 
+						AND dcode = trt.dcode)) AS ABS_AMOUNTCL_DIFF_2019_2018  
+	FROM TREAT trt JOIN doctor doc ON doc.dcode = trt.dcode; 
+-- Для лучшей читаемости можно было решить через CTE, но я решил для тестового сделать так.
+
+14. SELECT clnt.fullname, jpgrmnt.agrid from clients clnt join clhistnum clh on clh.pcode = clnt.pcode join jpersons
+
+
+
+
+
+
+
+
+
+
+
+
